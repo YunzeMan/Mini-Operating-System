@@ -112,6 +112,43 @@ int kernel_putint(int x, int fc, int bg) {
     return x;
 }
 
+static const char *BIN_MAP = "01";
+int kernel_putintb(unsigned int x, int fc, int bg) {
+    char buffer[12];
+    char *ptr = buffer + 11;
+    int neg = 0;
+    buffer[11] = 0;
+    if (x == 0) {
+        kernel_putchar('0', fc, bg);
+        return x;
+    }
+    while (x) {
+        ptr--;
+        *ptr = BIN_MAP[x & 1];
+        x >> = 1;
+    }
+    kernel_puts(ptr, fc, bg);
+    return x;
+}
+
+static const char *OCT_MAP = "01234567";
+int kernel_putinto(unsigned int x, int fc, int bg) {
+    char buffer[12];
+    char *ptr = buffer + 11;
+    buffer[11] = 0;
+    if (x == 0) {
+        kernel_putchar('0', fc, bg);
+        return x;
+    }
+    while (x) {
+        ptr--;
+        *ptr = OCT_MAP[x & 7];
+        x >> = 3;
+    }
+    kernel_puts(ptr, fc, bg);
+    return x;
+}
+
 static const char *HEX_MAP = "0123456789abcdef";
 int kernel_putintx(unsigned int x, int fc, int bg) {
     char buffer[12];
