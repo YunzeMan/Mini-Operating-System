@@ -107,6 +107,13 @@ void print_curr_char(int key) {
     cursor_col = col;
 }
 
+void print_curr_string(char *str) {
+   while(*str) {
+       print_curr_char(*str);
+       ++str;
+   }
+}
+
 #endif  // ! PS2_DEBUG
 
 void init_buffer() {
