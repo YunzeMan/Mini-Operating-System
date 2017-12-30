@@ -23,6 +23,33 @@ void test_syscall4() {
         "nop\n\t");
 }
 
+void test_proc() {
+    unsigned int timestamp;
+    unsigned int currTime;
+    unsigned int data;
+    asm volatile("mfc0 %0, $9, 6\n\t" : "=r"(timestamp));
+    data = timestamp & 0xff;
+    while (1) {
+        asm volatile("mfc0 %0, $9, 6\n\t" : "=r"(currTime));
+        if (currTime - timestamp > 100000000) {
+            timestamp += 100000000;
+            *((unsigned int *)0xbfc09018) = data;
+        }
+    }
+}
+
+int proc_demo_create() {
+    int asid = pc_peek();
+    if (asid < 0) {
+        kernel_puts("Failed to allocate pid.\n", 0xfff, 0);
+        return 1;
+    }
+    unsigned int init_gp;
+    asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+    pc_create(asid, test_proc, (unsigned int)kmalloc(4096), init_gp, "test");
+    return 0;
+}
+
 void ps() {
     kernel_printf("Press any key to enter shell.\n");
     kernel_getchar();
