@@ -252,23 +252,9 @@ int kernel_vprintf(const char *format, va_list ap) {
                     cnt++;
                     break;
                 }
-                case 'b': {
-                    int valint = va_arg(ap, int);
-                    kernel_putintb(valint, 0xfff, 0);
-                    format++;
-                    cnt++;
-                    break;
-                }
                 case 'f': {
                     int valint = va_arg(ap, int);
                     kernel_putfloat(valint, 0xfff, 0);
-                    format++;
-                    cnt++;
-                    break;
-                }
-                case 'o': {
-                    int valint = va_arg(ap, int);
-                    kernel_putinto(valint, 0xfff, 0);
                     format++;
                     cnt++;
                     break;

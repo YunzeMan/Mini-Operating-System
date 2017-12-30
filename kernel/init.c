@@ -2,11 +2,13 @@
 #include <driver/ps2.h>
 #include <driver/vga.h>
 #include <exc.h>
-#include <init_place_holder.h>
 #include <intr.h>
+#include <page.h>
 #include <zjunix/bootmm.h>
 #include <zjunix/buddy.h>
+#include <zjunix/fs/fat.h>
 #include <zjunix/log.h>
+#include <zjunix/pc.h>
 #include <zjunix/slab.h>
 #include <zjunix/syscall.h>
 #include <zjunix/time.h>
@@ -34,7 +36,6 @@ void init_kernel() {
     // Drivers
     init_vga();
     init_ps2();
-    init_time();
     // Memory management
     log(LOG_START, "Memory Modules.");
     init_bootmm();
@@ -64,5 +65,5 @@ void init_kernel() {
     machine_info();
     *GPIO_SEG = 0x11223344;
     // Enter shell
-    ps();
+    while(1);
 }
