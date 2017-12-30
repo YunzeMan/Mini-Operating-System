@@ -4,9 +4,13 @@
 #include <driver/vga.h>
 #include <zjunix/bootmm.h>
 #include <zjunix/buddy.h>
+#include <zjunix/fs/fat.h>
 #include <zjunix/slab.h>
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
+#include "../usr/ls.h"
+#include "exec.h"
+#include "myvi.h"
 
 char ps_buffer[64];
 int ps_buffer_index;
@@ -108,6 +112,33 @@ void parse_cmd() {
         buddy_info();
     } else if (kernel_strcmp(ps_buffer, "mmtest") == 0) {
         kernel_printf("kmalloc : %x, size = 1KB\n", kmalloc(1024));
+    } else if (kernel_strcmp(ps_buffer, "ps") == 0) {
+        result = print_proc();
+        kernel_printf("ps return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "kill") == 0) {
+        int pid = param[0] - '0';
+        kernel_printf("Killing process %d\n", pid);
+        result = pc_kill(pid);
+        kernel_printf("kill return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "time") == 0) {
+        unsigned int init_gp;
+        asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+        pc_create(2, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time");
+    } else if (kernel_strcmp(ps_buffer, "proc") == 0) {
+        result = proc_demo_create();
+        kernel_printf("proc return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "cat") == 0) {
+        result = fs_cat(param);
+        kernel_printf("cat return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "ls") == 0) {
+        result = ls(param);
+        kernel_printf("ls return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "vi") == 0) {
+        result = myvi(param);
+        kernel_printf("vi return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "exec") == 0) {
+        result = exec(param);
+        kernel_printf("exec return with %d\n", result);
     } else {
         kernel_puts(ps_buffer, 0xfff, 0);
         kernel_puts(": command not found\n", 0xfff, 0);
