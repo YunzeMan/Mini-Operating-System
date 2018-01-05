@@ -7,9 +7,12 @@
 /* 4k data buffer number in each file struct */
 #define LOCAL_DATA_BUF_NUM 4
 
+/* Sector Size */
 #define SECTOR_SIZE 512
+/* Cluster Size */
 #define CLUSTER_SIZE 4096
 
+/* The attribute of dir entry */
 struct __attribute__((__packed__)) dir_entry_attr {
     u8 name[8];                   /* Name */
     u8 ext[3];                    /* Extension */
@@ -38,6 +41,7 @@ typedef struct fat_file {
     unsigned long loc;
     /* Current directory entry position */
     unsigned long dir_entry_pos;
+    /* Current directory entry sector */
     unsigned long dir_entry_sector;
     /* current directory entry */
     union dir_entry entry;
@@ -47,12 +51,14 @@ typedef struct fat_file {
     BUF_4K data_buf[LOCAL_DATA_BUF_NUM];
 } FILE;
 
+/* file system directory attribute */
 typedef struct fs_fat_dir {
     unsigned long cur_sector;
     unsigned long loc;
     unsigned long sec;
 } FS_FAT_DIR;
 
+/* The attribute of BPB */
 struct __attribute__((__packed__)) BPB_attr {
     // 0x00 ~ 0x0f
     u8 jump_code[3];
@@ -96,6 +102,7 @@ union BPB_info {
     struct BPB_attr attr;
 };
 
+/* The information of file system */
 struct fs_info {
     u32 base_addr;
     u32 sectors_per_fat;

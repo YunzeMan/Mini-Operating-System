@@ -2,11 +2,12 @@
 #include <driver/sd.h>
 #include "fat.h"
 
-/* Read/Write block for FAT (starts from first block of partition 1) */
+/* Read block for FAT (starts from first block of partition 1) */
 u32 read_block(u8 *buf, u32 addr, u32 count) {
     return sd_read_block(buf, addr, count);
 }
 
+/* Write block for FAT (starts from first block of partition 1) */
 u32 write_block(u8 *buf, u32 addr, u32 count) {
     return sd_write_block(buf, addr, count);
 }
@@ -42,10 +43,12 @@ u32 fs_wa(u32 num) {
     return i;
 }
 
+/* get the size of file of entry */
 u32 get_entry_filesize(u8 *entry) {
     return get_u32(entry + 28);
 }
 
+/* get the attribute of entry */
 u32 get_entry_attr(u8 *entry) {
     return entry[11];
 }

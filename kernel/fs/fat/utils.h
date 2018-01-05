@@ -5,11 +5,11 @@
 #include <zjunix/type.h>
 
 // Manipulate data through pointers
-u16 get_u16(u8 *ch);
-u32 get_u32(u8 *ch);
-void set_u16(u8 *ch, u16 num);
-void set_u32(u8 *ch, u32 num);
-u32 fs_wa(u32 num);
+u16 get_u16(u8 *ch); /* char to u16 */
+u32 get_u32(u8 *ch); /* char to u32 */
+void set_u16(u8 *ch, u16 num); /* u16 to char */
+void set_u32(u8 *ch, u32 num); /* u32 to char */
+u32 fs_wa(u32 num); /* work around */
 
 // Get file entry info
 u32 get_start_cluster(const FILE *file);

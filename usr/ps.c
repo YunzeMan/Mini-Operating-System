@@ -94,7 +94,10 @@ void parse_cmd() {
     kernel_putchar('\n', 0, 0);
     char sd_buffer[8192];
     int i = 0;
-    char *param;
+    char *param; /**/
+    char *src; /* The source of cp and mv instruction */
+    char *dest; /* The destination of cp and mv instruction */
+    /* participle ps_buffer to get param and cmd */
     for (i = 0; i < 63; i++) {
         if (ps_buffer[i] == ' ') {
             ps_buffer[i] = 0;
@@ -173,8 +176,49 @@ void parse_cmd() {
         result = fs_mkdir(param);
         kernel_printf("mkdir return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "rmdir") == 0) {
+        /* add rmdir instruction */
         result = fs_rmdir(param);
         kernel_printf("rmdir return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "mv") == 0) {
+        /* add mv instruction */
+        for (i = 0; i < 63; i++)
+        {
+            if(param[i] == ' ')
+            {
+                param[i] = 0;
+            }
+        }
+        if (i == 63)
+        {
+            src = param;
+        }
+        else
+        {
+            src = param;
+            dest = param + i + 1;
+        }
+        result = fs_mv(src, dest);
+        kernel_printf("mv return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "cp") == 0) {
+        /* add cp instruction */
+        for(i = 0; i < 63; i++)
+        {
+            if(param[i] == ' ')
+            {
+                param[i] = 0;
+            }
+        }
+        if (i == 63)
+        {
+            src = param;
+        }
+        else
+        {
+            src = param;
+            dest = param + i + 1;
+        }
+        result = fs_cp(src, dest);
+        kernel_printf("cp return with %d\n", result);
     } else {
         kernel_puts(ps_buffer, 0xfff, 0);
         kernel_puts(": command not found\n", 0xfff, 0);

@@ -128,6 +128,37 @@ fs_cp_err:
 
 /* rmdir */
 u32 fs_rmdir(u8 *filename) {
+    u32 clus;
+    u32 next_clus;
+    FILE rm_dir;
+
+    /* if dir does not exist */
+    if (fs_open(&rm_dir, filename) == 1)
+        goto fs_rmdir_err;
+
+    /* Mark 0xE5 */
+    rm_dir.entry.data[0] = 0xE5;
+
+    /* Release all allocated block */
+    clus = get_start_cluster(&rm_dir);
+
+    while (clus != 0 && clus <= fat_info.total_data_clusters + 1) {
+        if (get_fat_entry_value(clus, &next_clus) == 1)
+            goto fs_rmdir_err;
+
+        /* Release block */
+        if (fs_modify_fat(clus, 0) == 1)
+            goto fs_rmdir_err;
+
+        clus = next_clus;
+    }
+
+    if (fs_close(&rm_dir) == 1)
+        goto fs_rmdir_err;
+
+    return 0;
+fs_rmdir_err:
+    return 1;
 
 }
 
