@@ -67,26 +67,26 @@ struct ext2_super_block {
 	u32	s_feature_incompat;   /* incompatible feature set */
 	u32	s_feature_ro_compat;  /* readonly-compatible feature set */
 	u8	s_uuid[16];		      /* 128-bit uuid for volume */
-	char s_volume_name[16]; /* volume name */
-	char s_last_mounted[64];   /* directory where last mounted */
+	u8  s_volume_name[16]; /* volume name */
+	u8  s_last_mounted[64];   /* directory where last mounted */
 	u32	s_algorithm_usage_bitmap; /* For compression */
 	u8	s_prealloc_blocks;	      /* Nr of blocks to try to preallocate*/
 	u8	s_prealloc_dir_blocks;	  /* Nr to preallocate for dirs */
 };
 
-struct ext2_dir_entry {
-	u32	inode;			/* Inode number */
-	u16	rec_len;		/* Directory entry length */
-	u16	name_len;		/* Name length */
-	char name[256];	    /* File name */
-};
+//struct ext2_dir_entry {
+//	u32	inode;			/* Inode number */
+//	u16	rec_len;		/* Directory entry length */
+//	u16	name_len;		/* Name length */
+//	u8  name[16];	    /* File name */
+//};
 
 struct ext2_dir_entry_2 {
 	u32	inode;			/* Inode number */
 	u16	rec_len;		/* Directory entry length */
 	u8	name_len;		/* Name length */
 	u8	file_type;
-	char name[256];	    /* File name */
+	u8  name[16];	    /* File name */
 };
 
 /*
@@ -106,24 +106,24 @@ enum {
 };
 
 struct ext2_sb_info {
-    unsigned long s_frag_size;	      /* Size of a fragment in bytes */
-	unsigned long s_frags_per_block;  /* Number of fragments per block */
-	unsigned long s_inodes_per_block; /* Number of inodes per block */
-	unsigned long s_frags_per_group;  /* Number of fragments in a group */
-	unsigned long s_blocks_per_group; /* Number of blocks in a group */
-	unsigned long s_inodes_per_group; /* Number of inodes in a group */
-	unsigned long s_itb_per_group;	  /* Number of inode table blocks per group */
-	unsigned long s_gdb_count;	      /* Number of group descriptor blocks */
-	unsigned long s_desc_per_block;	  /* Number of group descriptors per block */
-	unsigned long s_groups_count;	  /* Number of groups in the fs */
+    u32 s_frag_size;	      /* Size of a fragment in bytes */
+	u32 s_frags_per_block;  /* Number of fragments per block */
+	u32 s_inodes_per_block; /* Number of inodes per block */
+	u32 s_frags_per_group;  /* Number of fragments in a group */
+	u32 s_blocks_per_group; /* Number of blocks in a group */
+	u32 s_inodes_per_group; /* Number of inodes in a group */
+	u32 s_itb_per_group;	  /* Number of inode table blocks per group */
+	u32 s_gdb_count;	      /* Number of group descriptor blocks */
+	u32 s_desc_per_block;	  /* Number of group descriptors per block */
+	u32 s_groups_count;	  /* Number of groups in the fs */
 	struct buffer_head * s_sbh;	      /* Buffer containing the super block */
 	struct ext2_super_block * s_es;	  /* Pointer to the super block in the buffer */
 	struct buffer_head ** s_group_desc;
-	int s_addr_per_block_bits;
-	int s_desc_per_block_bits;
-	int s_inode_size;
-	int s_first_ino;
-	unsigned long s_dir_count;
+	u32 s_addr_per_block_bits;
+	u32 s_desc_per_block_bits;
+	u32 s_inode_size;
+	u32 s_first_ino;
+	u32 s_dir_count;
 };
 
 struct ext2_inode_info {
@@ -144,6 +144,15 @@ struct ext2_inode_info {
 	u32	i_dir_start_lookup;
 	//struct inode vfs_inode;
 };
+
+u32 init_ext2();
+u32 ext2_find();
+u32 ext2_open(FILE *file, unsigned char *filename);
+u32 ext2_close(FILE *file);
+u32 ext2_read(FILE *file, unsigned char *buf, unsigned long count);
+u32 ext2_write(FILE *file, const unsigned char *buf, unsigned long count);
+u32 ext2_fflush();
+void ext2_lseek(FILE *file, unsigned long new_loc);
 
 /* balloc.c */
 extern int ext2_new_block (struct inode *, unsigned long, __u32 *, __u32 *, int *);
