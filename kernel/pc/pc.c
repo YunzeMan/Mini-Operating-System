@@ -56,8 +56,8 @@ void init_pc() {
 
     asm volatile(
         "li $v0, 1000000\n\t"
-        "mtc0 $v0, $11\n\t"
-        "mtc0 $zero, $9");
+        "mtc0 $v0, $11\n\t" // 11号寄存器是compare, 当计数器达到compare值的时候，自动触发硬件中断
+        "mtc0 $zero, $9"); // 9号寄存器是count，随时间自动增加
 }
 
 void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
