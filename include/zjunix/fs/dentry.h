@@ -15,9 +15,12 @@ struct dentry {
     struct list_head d_subdirs;     /* our children */  
     struct list_head d_alias;       /* inode alias list */    
     //struct dentry_operations  *d_op;  
-    struct super_block * d_sb;      /* The root of the dentry tree */    
+    struct superblock * d_sb;      /* The root of the dentry tree */    
     void * d_fsdata;                /* fs-specific data */  
     unsigned char d_iname[DNAME_INLINE_LEN]; /* small names */  
 }
+
+int get_inode(struct superblock *sb);
+int put_inode(struct superblock *sb, u16 ino);
 
 #endif // !_ZJUNIX_FS_DENTRY_H
