@@ -93,6 +93,7 @@ init_fat_info_err:
     return 1;
 }
 
+/* Init fat buffer */
 void init_fat_buf() {
     int i = 0;
     for (i = 0; i < FAT_BUF_NUM; i++) {
@@ -101,6 +102,7 @@ void init_fat_buf() {
     }
 }
 
+/* Init directory buffer */
 void init_dir_buf() {
     int i = 0;
     for (i = 0; i < DIR_DATA_BUF_NUM; i++) {
@@ -215,6 +217,7 @@ u32 fs_cmp_filename(const u8 *f1, const u8 *f2) {
 
 /* Find a file, only absolute path with starting '/' accepted */
 u32 fs_find(FILE *file) {
+    /* get the filepath of file */
     u8 *f = file->path;
     u32 next_slash;
     u32 i, k;
@@ -222,6 +225,7 @@ u32 fs_find(FILE *file) {
     u32 index;
     u32 sec;
 
+    /* filepath does not start with '/' */
     if (*(f++) != '/')
         goto fs_find_err;
 
@@ -792,6 +796,30 @@ fs_creat_err:
 
 u32 fs_create(u8 *filename) {
     return fs_create_with_attr(filename, 0x20);
+}
+
+void get_filetime(u8 *entry, u8 *buf) {
+    u32 i;
+    for (i = 22; i < 24; i++) {
+        buf[i-22] = entry[i];
+    }
+    buf[i - 22] = 0;
+}
+
+void get_filedate(u8 *entry, u8 *buf) {
+    u32 i;
+    for (i = 24; i < 26; i++) {
+        buf[i-24] = entry[i]
+    }
+    buf[i - 24] = 0;
+}
+
+void get_filesize(u8 *entry, u8 *buf) {
+    u32 i;
+    for (i = 28; i < 32; i++) {
+        buf[i-28] = entry[i];
+    }
+    buf[i - 28] = 0;
 }
 
 void get_filename(u8 *entry, u8 *buf) {

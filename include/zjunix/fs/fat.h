@@ -36,26 +36,26 @@ union dir_entry {
 
 /* file struct */
 typedef struct fat_file {
-    unsigned char path[256];
+    u8 path[256];
     /* Current file pointer */
-    unsigned long loc;
+    u32 loc;
     /* Current directory entry position */
-    unsigned long dir_entry_pos;
+    u32 dir_entry_pos;
     /* Current directory entry sector */
-    unsigned long dir_entry_sector;
+    u32 dir_entry_sector;
     /* current directory entry */
     union dir_entry entry;
     /* Buffer clock head */
-    unsigned long clock_head;
+    u32 clock_head;
     /* For normal FAT32, cluster size is 4k */
     BUF_4K data_buf[LOCAL_DATA_BUF_NUM];
 } FILE;
 
 /* file system directory attribute */
 typedef struct fs_fat_dir {
-    unsigned long cur_sector;
-    unsigned long loc;
-    unsigned long sec;
+    u32 cur_sector;
+    u32 loc;
+    u32 sec;
 } FS_FAT_DIR;
 
 /* The attribute of BPB */
@@ -149,6 +149,12 @@ unsigned long fs_read_dir(FS_FAT_DIR *dir, unsigned char *buf);
 unsigned long fs_cat(unsigned char * path);
 
 void get_filename(unsigned char *entry, unsigned char *buf);
+
+void get_filedate(unsigned char *entry, unsigned char *buf);
+
+void get_filetime(unsigned char *entry, unsigned char *buf);
+
+void get_filesize(unsigned char *entry, unsigned char *buf);
 
 u32 read_block(u8 *buf, u32 addr, u32 count);
 
