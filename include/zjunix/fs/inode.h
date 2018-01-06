@@ -16,14 +16,17 @@ struct inode {
     u16 date;                     /* Last modify date */
     u16 startlow;                 /* Start cluster (Low 16 bits) */
     u32 size;                     /* file size (in bytes) */
-    struct list_head i_hash;      /* 指向hash链表的指针 */
-    struct list_head i_list;      /* 指向索引节点的链表指针 */
-    struct list_head i_dentry;    /* 指向目录项链表指针*/
+    struct list_head i_hash;      /* The pointer to hash list */
+    struct list_head i_list;      /* The pointer to index inode list */
+    struct list_head i_dentry;    /* The pointer to dentry list */
     struct list_head i_dirty_buffers;
-    struct list_head i_dirty_data_buffers; /* 脏数据缓冲区 */
-    u32 i_ino;                    /* 索引节点号 */
-    u32 i_count                   /* 引用计数 */
-
+    struct list_head i_dirty_data_buffers;  /* dirty data buffers */
+    u32 ino;                      /* index inode id */
+    u32 count;                    /* reference count */
+    u32 uid;                      /* user id */
+    u32 gid;                      /* group id */
+    u32 blockbits;                /* block size (in bits) */
+    u32 blocksize;                /* block size (in bytes) */
 }
 
 
