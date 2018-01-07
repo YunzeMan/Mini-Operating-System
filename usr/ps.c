@@ -185,9 +185,9 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "ls_l") == 0) {
         result = ls_l(param);
         kernel_printf("ls_l return with %d\n", result);
-    } else if (kernel_strcmp(ps_buffer, "ls_a") == 0) {
-        //result = ls_a(param);
-        //kernel_printf("ls_a return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "ls_help") == 0) {
+        result = ls_help();
+        kernel_printf("ls_a return with %d\n", result);
     }
     else if (kernel_strcmp(ps_buffer, "mv") == 0) {
         /* add mv instruction */
