@@ -8,12 +8,33 @@
 #include <zjunix/slab.h>
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
+#include <zjunix/fs/vfs.h>
 #include "../usr/ls.h"
 #include "exec.h"
 #include "myvi.h"
 
 char ps_buffer[64];
 int ps_buffer_index;
+struct vfs* vfsfile;
+
+void initial_vfs() {
+    vfsfile->find = &fs_find;
+    vfsfile->init = &init_fs;
+    vfsfile->open = &fs_open;
+    vfsfile->close = &fs_close;
+    vfsfile->read = &fs_read;
+    vfsfile->close = &fs_close;
+    vfsfile->fflush = &fs_fflush;
+    vfsfile->create = &fs_create;
+    vfsfile->mkdir = &fs_mkdir;
+    vfsfile->rmdir = &fs_rmdir;
+    vfsfile->rm = &fs_rm;
+    vfsfile->mv = &fs_mv;
+    vfsfile->cp = &fs_cp;
+    vfsfile->open_dir = &fs_open_dir;
+    vfsfile->read_dir = &fs_read_dir;
+    vfsfile->cat = &fs_cat;
+}
 
 void test_syscall4() {
     asm volatile(
@@ -88,6 +109,7 @@ void ps() {
 }
 
 void parse_cmd() {
+    initial_vfs();
     unsigned int result = 0;
     char dir[32];
     char c;
@@ -185,7 +207,11 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "ls_l") == 0) {
         result = ls_l(param);
         kernel_printf("ls_l return with %d\n", result);
-    } else if (kernel_strcmp(ps_buffer, "mv") == 0) {
+    } else if (kernel_strcmp(ps_buffer, "ls_help") == 0) {
+        result = ls_help();
+        kernel_printf("ls_a return with %d\n", result);
+    }
+    else if (kernel_strcmp(ps_buffer, "mv") == 0) {
         /* add mv instruction */
         for (i = 0; i < 63; i++)
         {

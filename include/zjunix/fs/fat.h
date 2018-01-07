@@ -29,6 +29,7 @@ struct __attribute__((__packed__)) dir_entry_attr {
     u32 size;                     /* file size (in bytes) */
 };
 
+/* the directory of FAT32 */
 union dir_entry {
     u8 data[32];
     struct dir_entry_attr attr;
@@ -114,46 +115,66 @@ struct fs_info {
     u8 fat_fs_info[SECTOR_SIZE];
 };
 
+/* find file */
 unsigned long fs_find(FILE *file);
 
+/* initial file system */
 unsigned long init_fs();
 
+/* the open instruction */
 unsigned long fs_open(FILE *file, unsigned char *filename);
 
+/* the close instruction */
 unsigned long fs_close(FILE *file);
 
+/* the read instruction */
 unsigned long fs_read(FILE *file, unsigned char *buf, unsigned long count);
 
+/* the write instruction */
 unsigned long fs_write(FILE *file, const unsigned char *buf, unsigned long count);
 
 unsigned long fs_fflush();
 
+/* the lseek instruction */
 void fs_lseek(FILE *file, unsigned long new_loc);
 
+/* the create instruction */
 unsigned long fs_create(unsigned char *filename);
 
+/* the make directory instruction */
 unsigned long fs_mkdir(unsigned char *filename);
 
+/* the remove directory instruction */
 unsigned long fs_rmdir(unsigned char *filename);
 
+/* the remove file instruction */
 unsigned long fs_rm(unsigned char *filename);
 
+/* the move file instruction */
 unsigned long fs_mv(unsigned char *src, unsigned char *dest);
 
+/* the copy file instruction */
 unsigned long fs_cp(unsigned char *src, unsigned char *dest);
 
+/* the open directory instruction */
 unsigned long fs_open_dir(FS_FAT_DIR *dir, unsigned char *filename);
 
+/* the read directory instruction */
 unsigned long fs_read_dir(FS_FAT_DIR *dir, unsigned char *buf);
 
+/* the cat instruction */
 unsigned long fs_cat(unsigned char * path);
 
+/* get file name */
 void get_filename(unsigned char *entry, unsigned char *buf);
 
+/* get file date */
 void get_filedate(unsigned char *entry, unsigned char *buf);
 
+/* get file time */
 void get_filetime(unsigned char *entry, unsigned char *buf);
 
+/* get file size */
 void get_filesize(unsigned char *entry, unsigned char *buf);
 
 u32 read_block(u8 *buf, u32 addr, u32 count);

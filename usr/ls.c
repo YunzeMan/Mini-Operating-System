@@ -33,6 +33,7 @@ unsigned int strlen(unsigned char *str) {
     return len;
 }
 
+/* The length of each_param */
 unsigned int each_param(char *para, char *word, unsigned int off, char ch) {
     int index = 0;
 
@@ -121,16 +122,16 @@ readdir:
             get_filetime((unsigned char *)&entry, time);
             if (entry.attr == 0x10) {
                 // sub dir
-                kernel_printf("%s/", name);
+                kernel_printf("%s", size);
                 kernel_printf("%s", date);
                 kernel_printf("%s", time);
-                kernel_printf("%s", size);
+                kernel_printf("%s/", name);
             }
             else {
-                kernel_printf("%s", name);
+                kernel_printf("%s", size);
                 kernel_printf("%s", date);
                 kernel_printf("%s", time);
-                kernel_printf("%s", size);
+                kernel_printf("%s", name);
             }
             kernel_printf("\n");
             goto readdir;
@@ -139,4 +140,10 @@ readdir:
         return 1;
 
     return 0;
+}
+
+int ls_help() {
+    char help[32] = "Usage: ls [OPTION]... [FILE]...";
+    kernel_printf("%s", help);
+    return 1;
 }
