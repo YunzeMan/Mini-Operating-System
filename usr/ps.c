@@ -179,6 +179,12 @@ void parse_cmd() {
         /* add rmdir instruction */
         result = fs_rmdir(param);
         kernel_printf("rmdir return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "touch") == 0) {
+        result = fs_create(param);
+        kernel_printf("touch return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "ls_l") == 0) {
+        result = ls_l(param);
+        kernel_printf("ls_l return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "mv") == 0) {
         /* add mv instruction */
         for (i = 0; i < 63; i++)
