@@ -2,6 +2,7 @@
 #define _ZJUNIX_FS_DENTRY_H
 
 #include <zjunix/type.h>
+#include <zjunix/list.h>
 
 struct dentry {
     u32 d_mounted;

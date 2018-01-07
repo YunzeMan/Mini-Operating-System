@@ -6,7 +6,7 @@
 
 #define EXT2_N_BLOCKS 15
 
-/* 组描述 */
+/* group descriptor */
 struct myext2_group_desc
 {
 	u32	bg_block_bitmap;		/* Blocks bitmap block */
@@ -19,7 +19,7 @@ struct myext2_group_desc
 	u32	bg_reserved[3];
 };
 
-/* 索引节点 */
+/* inode */
 struct myext2_inode {
 	u16	i_mode;		    /* File mode */
 	u16	i_uid;		    /* Low 16 bits of Owner Uid */
@@ -39,7 +39,7 @@ struct myext2_inode {
 	u32	i_faddr;	    /* Fragment address */
 };
 
-/* 超级块 */
+/* superblock */
 struct myext2_super_block {
 	u32	s_inodes_count;		    /* Inodes count */
 	u32	s_blocks_count;		    /* Blocks count */
@@ -65,12 +65,12 @@ struct myext2_super_block {
 	u32	s_feature_incompat; 	/* incompatible feature set */
 	u32	s_feature_ro_compat; 	/* readonly-compatible feature set */
 	u8	s_uuid[16];		        /* 128-bit uuid for volume */
-	char	s_volume_name[16]; 	/* volume name */
-	char	s_last_mounted[64]; /* directory where last mounted */
+	char s_volume_name[16]; 	/* volume name */
+	char s_last_mounted[64]; /* directory where last mounted */
 	u32	s_reserved[190];	    /* Padding to the end of the block */
 };
 
-/* 目录结构 */
+/* directory */
 struct myext2_dir_entry_2 {
 	u32	inode;			/* Inode number */
 	u16	rec_len;		/* Directory entry length */
@@ -79,10 +79,7 @@ struct myext2_dir_entry_2 {
 	u8  name[16];	    /* File name */
 };
 
-/*
- * Ext2 directory file types.  Only the low 3 bits are used.  The
- * other bits are reserved for now.
- */
+/* Ext2 directory file types. */
 enum {
 	MYEXT2_FT_UNKNOWN,   /* unknown */
 	MYEXT2_FT_REG_FILE,  /* normal file */
