@@ -39,7 +39,7 @@ void test_proc() {
 }
 
 int proc_demo_create() {
-    int asid = pc_peek();
+    int asid = pc_peek(4);
     if (asid < 0) {
         kernel_puts("Failed to allocate pid.\n", 0xfff, 0);
         return 1;
@@ -153,7 +153,7 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "time") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-        pc_create(2, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time", 7);
+        pc_create(2, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time", 4);
     } else if (kernel_strcmp(ps_buffer, "proc") == 0) {
         result = proc_demo_create();
         kernel_printf("proc return with %d\n", result);

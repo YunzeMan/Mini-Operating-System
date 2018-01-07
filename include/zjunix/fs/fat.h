@@ -27,12 +27,12 @@ struct __attribute__((__packed__)) dir_entry_attr {
     u16 date;                     /* Last modify date */
     u16 startlow;                 /* Start cluster (Low 16 bits) */
     u32 size;                     /* file size (in bytes) */
-}
+};
 
 union dir_entry {
     u8 data[32];
     struct dir_entry_attr attr;
-}
+};
 
 /* file struct */
 typedef struct fat_file {

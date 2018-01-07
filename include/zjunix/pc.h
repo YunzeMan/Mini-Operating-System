@@ -39,7 +39,7 @@ typedef union {
 
 void init_pc();
 void pc_schedule(unsigned int status, unsigned int cause, context* pt_context);
-int pc_peek(int priority = 4);
+int pc_peek(int priority);
 void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init_gp, char* name, int priority);
 void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_context);
 void pc_preempt_syscall(unsigned int status, unsigned int cause, context* pt_context);

@@ -1,3 +1,3 @@
-OBJS := debug.o dir.o fat.o
+OBJS :=	 fat.o dir.o usr.o utils.o debug.o
 
 include $(SUB_MAKE_INCLUDE)

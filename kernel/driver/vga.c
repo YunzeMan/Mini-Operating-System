@@ -125,7 +125,7 @@ int kernel_putintb(unsigned int x, int fc, int bg) {
     while (x) {
         ptr--;
         *ptr = BIN_MAP[x & 1];
-        x >> = 1;
+        x = x >> 1;
     }
     kernel_puts(ptr, fc, bg);
     return x;
@@ -143,7 +143,7 @@ int kernel_putinto(unsigned int x, int fc, int bg) {
     while (x) {
         ptr--;
         *ptr = OCT_MAP[x & 7];
-        x >> = 3;
+        x = x >> 3;
     }
     kernel_puts(ptr, fc, bg);
     return x;
@@ -161,7 +161,7 @@ int kernel_putintx(unsigned int x, int fc, int bg) {
     while (x) {
         ptr--;
         *ptr = HEX_MAP[x & 15];
-        x >> = 4;
+        x = x >> 4;
     }
     kernel_puts(ptr, fc, bg);
     return x;
@@ -179,40 +179,9 @@ int kernel_putintX(unsigned int x, int fc, int bg) {
     while (x) {
         ptr--;
         *ptr = HEX_MAP_M[x & 15];
-        x >> = 4;
+        x = x >> 4;
     }
     kernel_puts(ptr, fc, bg);
-    return x;
-}
-
-//put float type
-double kernel_putfloat(double x, int fc, int bg) {
-    char buffer[12];
-    char *ptr = buffer + 11;
-    buffer[11] = 0;
-    int count = 0;
-    double y = x;
-    while((int)y != 0)
-    {
-        y = y / 10;
-        count++;
-    }
-    for(int i = 0; i < count && i < 10; i++)
-    {
-        y = y * 10;
-        ptr--;
-        *ptr = (int)y;
-        y = y - (int)y;
-    }
-    ptr--;
-    *ptr = '.'
-    for(int i = 0; i < 10 - count; i++)
-    {
-        y = y * 10;
-        ptr--;
-        *ptr = (int)y;
-        y = y -(int)y;
-    }
     return x;
 }
 
@@ -248,13 +217,6 @@ int kernel_vprintf(const char *format, va_list ap) {
                 case 'o': {
                     int valint = va_arg(ap, int);
                     kernel_putinto(valint, 0xfff, 0);
-                    format++;
-                    cnt++;
-                    break;
-                }
-                case 'f': {
-                    int valint = va_arg(ap, int);
-                    kernel_putfloat(valint, 0xfff, 0);
                     format++;
                     cnt++;
                     break;
