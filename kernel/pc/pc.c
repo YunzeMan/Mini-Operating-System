@@ -273,3 +273,5 @@ int print_proc() {
     }
     return 0;
 }
+
+// schedule, create and init are carefully checked
