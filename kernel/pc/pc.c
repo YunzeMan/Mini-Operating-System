@@ -5,11 +5,11 @@
 #include <zjunix/syscall.h>
 #include <zjunix/utils.h>
 
-task_level task_queue[8]; // 高下标代表高优先级
+task_level task_queue[8]; // 
 int curr_proc[8];
 int curr_queue;
 
-unsigned int time_slice[8]; // 优先极高的时间片短  反之亦然
+unsigned int time_slice[8]; // 
 
 static void copy_context(context* src, context* dest) {
     dest->epc = src->epc;
@@ -47,33 +47,39 @@ static void copy_context(context* src, context* dest) {
 }
 
 void init_pc() {
-    int i;
+    // kernel_puts("Init_pc_start\n", 0xfff, 0);
+    int i, j;
     for (i = 0; i < 8; i++)
-    { // 初始化进程优先级队列，初始化时间片的值
+    { // 
         for(j = 0; j < 8; j++)
             task_queue[i].pcb[j].ASID = -1;
         curr_proc[i] = -1;
 
-        time_slice[i] = 100000 * (10 - i);
+        time_slice[i] = 1000000 * (10 - i);
     }
-    // 在0号队列创建第一个进程init
-    task_queue[0].pcb[0].ASID = 0;
-    task_queue[0].pcb[0].counter = PROC_DEFAULT_TIMESLOTS;
-    kernel_strcpy(task_queue[0].pcb[0].name, "init");
-    curr_proc[0] = 0;
-    curr_queue = 0;
+
+
+    // 
+    task_queue[4].pcb[0].ASID = 0;
+    task_queue[4].pcb[0].counter = PROC_DEFAULT_TIMESLOTS;
+    kernel_strcpy(task_queue[4].pcb[0].name, "init");
+    curr_proc[4] = 0;
+    curr_queue = 4;
     register_syscall(10, pc_kill_syscall);
     register_syscall(11, pc_preempt_syscall);
     register_interrupt_handler(7, pc_schedule);
 
     asm volatile(
-        "li $v0, 1000000\n\t" 
-        "mtc0 $v0, $11\n\t" // 11号寄存器是compare, 当计数器达到compare值的时候，自动触发硬件中断
-        "mtc0 $zero, $9\n\t"   // 9号寄存器是count，随时间自动增加
+        "li $v0, 100000000\n\t" 
+        "mtc0 $v0, $11\n\t" // 
+        "mtc0 $zero, $9\n\t"   // 
         ); 
+    // kernel_puts("Init_pc_end\n", 0xfff, 0);
+
 }
 
 void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
+    //kernel_puts("pc_schedule start\n", 0xfff, 0);
     unsigned int compare_time;
     // Save context
     copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));
@@ -81,17 +87,20 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
     asm volatile(
         "mfc0 %0, $11\n\t"
         "mfc0 %1, $9\n\t"
-        : "=r"(compare_time), "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice) );
+        "mtc0 $zero, $9\n\t"
+        : "=r"(compare_time), "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice));
     
     // Decrement or increment the priority by 1
     if (task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice < compare_time) // Be preempted, increment priority
     { // If not the highest priority
+        //kernel_puts("preempted start\n", 0xfff, 0);
+
         if (curr_queue >= 4 && curr_queue != 7)
         {
             int k;
             for (k = 0; k < 8; k++)
             {
-                curr_proc[curr_queue + 1] = (curr_proc[curr_queue + 1] + 1) % 7;
+                curr_proc[curr_queue + 1] = (curr_proc[curr_queue + 1] + 1) & 7;
                 if(task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].ASID < 0)
                     break;
             }
@@ -114,6 +123,8 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
     }
     else // time slice == compare time, decrement the priority
     {
+        //kernel_puts("time slice runout start\n", 0xfff, 0);
+
         // Re-assign the time-slice for process
         task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice = 0;
         if (curr_queue > 4)
@@ -121,7 +132,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             int k;
             for (k = 0; k < 8; k++)
             {
-                curr_proc[curr_queue - 1] = (curr_proc[curr_queue - 1] + 1) % 7;
+                curr_proc[curr_queue - 1] = (curr_proc[curr_queue - 1] + 1) & 7;
                 if(task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].ASID < 0)
                     break;
             }
@@ -141,20 +152,32 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             }
         }
     }
-
+    //kernel_puts("pc_schedule step1\n", 0xfff, 0);
     // Select process to load in CPU
     int i, j;
     for(i = 7; i >= 0; i--) // From high priority to low priority
     {
+       //kernel_printf("i is %d\n", i);
+
         for(j = 0; j < 8; j++)
         {
-            curr_proc[i] = (curr_proc[i] + 1) % 7;
-            if(task_queue[i].pcb[curr_proc[i]].ASID > 0)
+            curr_proc[i] = (curr_proc[i] + 1) & 7;
+            //kernel_printf("curr_proc[i] is %d\n", curr_proc[i]);
+
+            if(task_queue[i].pcb[curr_proc[i]].ASID > 0){
+                //kernel_printf("i is %d, ASID is %d\n",i, task_queue[i].pcb[curr_proc[i]].ASID);
                 break;
+            }
+
         }
-        if (j != 8)
+        //kernel_printf("here\n");
+        //kernel_printf("j == %d\n", j);
+        if (j != 8){
+            //
             break;
+        }
     }
+    //kernel_puts("pc_schedule step2\n", 0xfff, 0);
     // If no valid process can be loaded, error!
     if(i < 0){
         kernel_puts("Error: PCB[0] is invalid!\n", 0xfff, 0);
@@ -165,15 +188,16 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
 
     // Load context
     copy_context(&(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context), pt_context);
-
-    asm volatile(
-        "li $v0, %0\n\t" 
-        "mtc0 $v0, $11\n\t" // 11号寄存器是compare, 当计数器达到compare值的时候，自动触发硬件中断
-        "mtc0 %1, $9\n\t"   // 9号寄存器是count，随时间自动增加
+    //kernel_puts("pc_schedule step3\n", 0xfff, 0);
+    asm volatile( 
+        "mtc0 %0, $11\n\t" // 
+        "mtc0 %1, $9\n\t"   //
         : "=r"(time_slice[task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority]), "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice)); // compare time is set according to static priority
+    //kernel_puts("pc_schedule end\n", 0xfff, 0);
+
 }
 
-int pc_peek(int priority = 4) {
+int pc_peek(int priority) {
     int i = 0;
     for (i = 0; i < 8; i++)
         if (task_queue[priority].pcb[i].ASID < 0)
@@ -183,12 +207,13 @@ int pc_peek(int priority = 4) {
     return i;
 }
 
-void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init_gp, char* name, int priority = 4) { // curr proc cannot change
+void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init_gp, char* name, int priority) { // curr proc cannot change
+    //kernel_puts("pc_create start\n", 0xfff, 0);
     int i;
     int curr_pos = curr_proc[priority]; // Do not change the curr_proc value
     for (i = 0; i < 8; i++)
     {
-        curr_pos = (curr_pos + 1) % 7;
+        curr_pos = (curr_pos + 1) & 7;
         if(task_queue[priority].pcb[curr_pos].ASID < 0)
             break;
     }
@@ -206,18 +231,21 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
     task_queue[priority].pcb[curr_pos].time_slice = 0;
     kernel_strcpy(task_queue[priority].pcb[curr_pos].name, name);
     task_queue[priority].pcb[curr_pos].ASID = asid;
-
-    // 判断抢占
+    
+    // 
     if (priority > curr_queue)
-    { // 抢占当前进程 
+    { //  
+        //kernel_puts("Preempt start\n", 0xfff, 0);
         asm volatile(
             "li $v0, 11\n\t"
             "syscall\n\t"
             "nop\n\t");
     }
+    //kernel_puts("pc_create end\n", 0xfff, 0);
+
 }
 
-void pc_preempt_syscall(unsigned int status, unsigned int cause, context* pt_context){ // 注意有没有问题
+void pc_preempt_syscall(unsigned int status, unsigned int cause, context* pt_context){ // 
     pc_schedule(status, cause, pt_context);
 }
 
@@ -239,11 +267,12 @@ int pc_kill(int proc) {
         kernel_puts("Error: Powershell process cannot be killed!\n", 0xfff, 0);
         return 1;
     }
+    int i, j;
     for(i = 7; i >= 0; i--) // From high priority to low priority
     {
         for(j = 0; j < 8; j++)
         {
-            curr_proc[i] = (curr_proc[i] + 1) % 7;
+            curr_proc[i] = (curr_proc[i] + 1) & 7;
             if(task_queue[i].pcb[curr_proc[i]].ASID = proc){
                 task_queue[i].pcb[curr_proc[i]].ASID = -1;
                 return 2;

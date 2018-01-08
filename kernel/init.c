@@ -31,6 +31,7 @@ void machine_info() {
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 void create_startup_process() {
+    kernel_puts("create_startup_process_start\n", 0xfff, 0);
     unsigned int init_gp;
     asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
     pc_create(1, ps, (unsigned int)kmalloc(4096) + 4096, init_gp, "powershell", 4);

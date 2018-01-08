@@ -810,7 +810,7 @@ void get_filetime(u8 *entry, u8 *buf) {
 void get_filedate(u8 *entry, u8 *buf) {
     u32 i;
     for (i = 24; i < 26; i++) {
-        buf[i-24] = entry[i]
+        buf[i-24] = entry[i];
     }
     buf[i - 24] = 0;
 }
