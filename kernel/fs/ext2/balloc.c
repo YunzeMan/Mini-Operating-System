@@ -2,26 +2,6 @@
 #include <zjunix/fs/buffer_head.h>
 
 
-int myext2_new_block (struct inode *, unsigned long, __u32 *, __u32 *, int *)
-{
-
-}
-
-void myext2_free_blocks (struct inode *, unsigned long, unsigned long)
-{
-
-}
-
-u32 myext2_count_free_blocks (struct super_block *)
-{
-
-}
-
-u32 myext2_count_dirs (struct super_block *)
-{
-
-}
-
 /* 获得组描述块 */
 struct myext2_group_desc * myext2_get_group_desc(struct myext2_sb_info * sb, unsigned int block_group, struct buffer_head ** bh)
 {

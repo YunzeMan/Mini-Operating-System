@@ -136,33 +136,42 @@ struct myext2_inode_info {
 
 u32 init_myext2();
 u32 myext2_find();
+u32 myext2_open();
+u32 myext2_close();
+u32 myext2_read();
+u32 myext2_write();
+u32 myext2_fflush();
+void myext2_lseek();
+
+/*u32 init_myext2();
+u32 myext2_find();
 u32 myext2_open(FILE *file, unsigned char *filename);
 u32 myext2_close(FILE *file);
 u32 myext2_read(FILE *file, unsigned char *buf, unsigned long count);
 u32 myext2_write(FILE *file, const unsigned char *buf, unsigned long count);
 u32 myext2_fflush();
-void myext2_lseek(FILE *file, unsigned long new_loc);
+void myext2_lseek(FILE *file, unsigned long new_loc);*/
 
 /* balloc.c */
-extern int myext2_new_block (struct inode *, unsigned long, __u32 *, __u32 *, int *);
-extern void myext2_free_blocks (struct inode *, unsigned long, unsigned long);
-extern u32 myext2_count_free_blocks (struct super_block *);
-extern u32 myext2_count_dirs (struct super_block *);
+//extern int myext2_new_block (struct inode *, unsigned long, __u32 *, __u32 *, int *);
+//extern void myext2_free_blocks (struct inode *, unsigned long, unsigned long);
+//extern u32 myext2_count_free_blocks (struct super_block *);
+//extern u32 myext2_count_dirs (struct super_block *);
 extern struct myext2_group_desc * myext2_get_group_desc(struct myext2_sb_info * sb, unsigned int block_group, struct buffer_head ** bh);
 
 /* dir.c */
-extern int myext2_make_empty(struct inode *, struct inode *);
-extern int myext2_empty_dir (struct inode *);
+//extern int myext2_make_empty(struct inode *, struct inode *);
+//extern int myext2_empty_dir (struct inode *);
 
 /* inode.c */
-extern void myext2_read_inode (struct inode *);
-extern int myext2_write_inode (struct inode *, int);
-extern void myext2_put_inode (struct inode *);
-extern void myext2_delete_inode (struct inode *);
-extern int myext2_sync_inode (struct inode *);
-extern void myext2_discard_prealloc (struct inode *);
-extern int myext2_get_block(struct inode *, sector_t, struct buffer_head *, int);
-extern void myext2_truncate (struct inode *);
+//extern void myext2_read_inode (struct inode *);
+//extern int myext2_write_inode (struct inode *, int);
+//extern void myext2_put_inode (struct inode *);
+//extern void myext2_delete_inode (struct inode *);
+//extern int myext2_sync_inode (struct inode *);
+//extern void myext2_discard_prealloc (struct inode *);
+//extern int myext2_get_block(struct inode *, sector_t, struct buffer_head *, int);
+//extern void myext2_truncate (struct inode *);
 
 /* file.c */
 

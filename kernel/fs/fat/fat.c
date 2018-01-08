@@ -113,6 +113,7 @@ void init_dir_buf() {
 
 /* FAT Initialize */
 u32 init_fs() {
+    /* if success then return 1 or return 0*/
     u32 succ = init_fat_info();
     if (0 != succ)
         goto fs_init_err;

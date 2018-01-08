@@ -12,6 +12,7 @@
 #include <zjunix/slab.h>
 #include <zjunix/syscall.h>
 #include <zjunix/time.h>
+#include <zjunix/vfs.h>
 #include "../usr/ps.h"
 
 void machine_info() {
@@ -60,6 +61,8 @@ void init_kernel() {
     // File system
     log(LOG_START, "File System.");
     init_fs();
+    // new add vfs
+    initial_vfs();
     log(LOG_END, "File System.");
     // System call
     log(LOG_START, "System Calls.");

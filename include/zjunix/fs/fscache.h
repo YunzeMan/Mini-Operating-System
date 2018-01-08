@@ -31,6 +31,11 @@ typedef struct buf_512 {
     u32 state;
 } BUF_512;
 
+u32 fs_victim_4k_lru(BUF_4K *buf, u32 *clock_head, u32 size);
+u32 fs_write_4k_lru(BUF_4K *f);
+u32 fs_read_4k_lru(BUF_4K *f, u32 FirstSectorOfCluster, u32 *clock_head, u32 size);
+u32 fs_clr_4k_lru(BUF_4K *buf, u32 *clock_head, u32 size, u32 cur);
+
 u32 fs_victim_4k(BUF_4K *buf, u32 *clock_head, u32 size);
 u32 fs_write_4k(BUF_4K *f);
 u32 fs_read_4k(BUF_4K *f, u32 FirstSectorOfCluster, u32 *clock_head, u32 size);

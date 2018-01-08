@@ -5,7 +5,14 @@
 #include <zjunix/fs/fat.h>
 
 struct ext2 {
-
+    u32 (*init)init_myext2();
+    u32 (*find)myext2_find();
+    u32 (*open)myext2_open();
+    u32 (*close)myext2_close();
+    u32 (*read)myext2_read();
+    u32 (*write)myext2_write();
+    u32 (*fflush)myext2_fflush();
+    void (*lseek)myext2_lseek();
 };
 
 struct fat32 {
@@ -44,5 +51,10 @@ struct vfs {
     struct fat32 * fat32_file;    /* fat32 file system */
     struct ext2 * ext2_file;      /* ext2 file system */
 };
+
+struct vfs* vfsfile;
+
+void initial_vfs();
+
 
 #endif // !_ZJUNIX_FS_VFS_H

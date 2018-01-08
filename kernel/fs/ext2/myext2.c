@@ -12,22 +12,22 @@ u32 myext2_find()
 
 }
 
-u32 myext2_open(FILE *file, unsigned char *filename)
+u32 myext2_open()
 {
 
 }
 
-u32 myext2_close(FILE *file)
+u32 myext2_close()
 {
 
 }
 
-u32 myext2_read(FILE *file, unsigned char *buf, unsigned long count)
+u32 myext2_read()
 {
 
 }
 
-u32 myext2_write(FILE *file, const unsigned char *buf, unsigned long count)
+u32 myext2_write()
 {
 
 }
@@ -37,7 +37,7 @@ u32 myext2_fflush()
 
 }
 
-void myext2_lseek(FILE *file, unsigned long new_loc)
+void myext2_lseek()
 {
 
 }
