@@ -1,8 +1,10 @@
 #include "vfs.h"
+#include <zjunix/slab.h>
 
 extern struct vfs* vfsfile;
 
 void initial_vfs() {
+    vfsfile = (struct vfs*)kmalloc(sizeof(struct vfs));
     /* Binding */
     vfsfile->fat32_file->find = &fs_find;
     vfsfile->fat32_file->init = &init_fs;
