@@ -69,14 +69,14 @@ void print_buffer() {
     cursor_col = 32;
     for (i = 0; i < 32; i++) {
         kernel_printf("%x ", ready[i]);
-        if (7 == (i % 8)) {
+        if (7 == (i & 7)) {
             cursor_col = 32;
             cursor_row++;
         }
     }
     for (i = 0; i < 32; i++) {
         kernel_printf("%x ", buffer[i]);
-        if (7 == (i % 8)) {
+        if (7 == (i & 7)) {
             cursor_col = 32;
             cursor_row++;
         }

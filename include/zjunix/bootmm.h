@@ -1,61 +1,73 @@
-#ifndef _ZJUNIX_BOOTMM_H
-#define _ZJUNIX_BOOTMM_H
+#ifndef BOOTMEM_H
+#define BOOTMEM_H
 
-extern unsigned char __end[];
-
-enum mm_usage { _MM_KERNEL, _MM_MMMAP, _MM_VGABUFF, _MM_PDTABLE, _MM_PTABLE, _MM_DYNAMIC, _MM_RESERVED, _MM_COUNT };
-
-// record every part of mm's information
-struct bootmm_info {
-    unsigned int start;
-    unsigned int end;
-    unsigned int type;
-};
-// typedef struct bootmm_info * p_mminfo;
-
-// 4K per page
-#define PAGE_SHIFT 12
+#define PAGE_SHIFT 12 //4k per page
 #define PAGE_FREE 0x00
 #define PAGE_USED 0xff
+#define MAX_INFO 10 // max number of bootmm
 
-#define PAGE_ALIGN (~((1 << PAGE_SHIFT) - 1))
 
-#define MAX_INFO 10
-
-struct bootmm {
-    unsigned int phymm;    // the actual physical memory
-    unsigned int max_pfn;  // record the max page number
-    unsigned char* s_map;  // map begin place
-    unsigned char* e_map;
-    unsigned int last_alloc_end;
-    unsigned int cnt_infos;  // get number of infos stored in bootmm now
-    struct bootmm_info info[MAX_INFO];
+enum mm_usage
+{
+    _MM_KERNEL,  //belongs to kernal, only visited in kernal mode
+    _MM_MMMAP,   //used to make bit map
+    _MM_VGABUFF, //used for vga buffer, only visited in kernal mode
+    _MM_PDTABLE,
+    _MM_PTABLE,  //used for paging
+    _MM_DYNAMIC, //can be used for dynamic allocating
+    _MM_RESERVED,
+    _MM_COUNT //number of memory type
 };
-// typedef struct bootmm * p_bootmm;
 
-extern unsigned int firstusercode_start;
-extern unsigned int firstusercode_len;
+// record each part of memory and its usage
+struct bootmm_info
+{
+    unsigned int start_pn; //start page number
+    unsigned int end_pn;   //end page number
+    unsigned int type;     //mm_usage
+};
+
+struct bootmm
+{
+    unsigned int phy_size; // the total physical memory (byte)
+    unsigned int max_pn;   // the max page number
+    unsigned char *s_map;  // bit map's start addr
+    unsigned char *e_map;  //bit map's end addr
+    unsigned int last_alloc;
+    unsigned int count;                // get number of infos stored in bootmm now
+    struct bootmm_info info[MAX_INFO]; // array to record the mm information
+};
 
 extern struct bootmm bmm;
 
-extern unsigned int get_phymm_size();
+//set memory information(start, end, type)
+void set_mminfo(struct bootmm_info *info, unsigned int start, unsigned int end, unsigned int type);
 
-extern void set_mminfo(struct bootmm_info* info, unsigned int start, unsigned int end, unsigned int type);
+//insert in to bmm
+unsigned int insert_mminfo(struct bootmm *mm, unsigned int start, unsigned int end, unsigned int type);
 
-extern unsigned int insert_mminfo(struct bootmm* mm, unsigned int start, unsigned int end, unsigned int type);
+//remove from bmm
+unsigned int remove_mminfo(struct bootmm *mm, unsigned int index);
 
-extern unsigned int split_mminfo(struct bootmm* mm, unsigned int index, unsigned int split_start);
+// initialize the bootmm
+void init_bootmm();
 
-extern void remove_mminfo(struct bootmm* mm, unsigned int index);
+//print bmm's information
+void bootmap_info();
 
-extern void init_bootmm();
+// find pages
+unsigned char *find_pages(unsigned int count, unsigned int s_pn, unsigned int e_pn, unsigned int align_pn);
 
-extern void set_maps(unsigned int s_pfn, unsigned int cnt, unsigned char value);
+// set the bit maps
+void set_maps(unsigned int s_pn, unsigned int cnt, unsigned char value);
 
-extern unsigned char* find_pages(unsigned int page_cnt, unsigned int s_pfn, unsigned int e_pfn, unsigned int align_pfn);
+// alloc pages
+unsigned char *bootmm_alloc_pages(unsigned int size, unsigned int type, unsigned int align);
 
-extern unsigned char* bootmm_alloc_pages(unsigned int size, unsigned int type, unsigned int align);
+// split segment in bmm
+unsigned int split_mminfo(struct bootmm *mm, unsigned int index, unsigned int split_start);
 
-extern void bootmap_info(unsigned char* msg);
+// free pages in bmm
+unsigned int bootmm_free_pages(unsigned int start, unsigned int size);
 
 #endif

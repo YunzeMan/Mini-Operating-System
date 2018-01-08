@@ -3,224 +3,352 @@
 #include <zjunix/bootmm.h>
 #include <zjunix/utils.h>
 
-struct bootmm bmm;
-unsigned int firstusercode_start;
-unsigned int firstusercode_len;
+#define KERNAL_MMSIZE 16 * 1024 *1024
 
-// const value for ENUM of mem_type
+// core part to record the information of memory
+struct bootmm bmm;
+
+// the message we can use for printing
 char *mem_msg[] = {"Kernel code/data", "Mm Bitmap", "Vga Buffer", "Kernel page directory", "Kernel page table", "Dynamic", "Reserved"};
 
-// set the content of struct bootmm_info
-void set_mminfo(struct bootmm_info *info, unsigned int start, unsigned int end, unsigned int type) {
-    info->start = start;
-    info->end = end;
+// bootmap for bootmm
+unsigned char bootmap[MACHINE_MMSIZE >> PAGE_SHIFT];
+
+// set the information of one used memory block
+void set_mminfo(struct bootmm_info *info, unsigned int start, unsigned int end, unsigned int type)
+{
+    info->start_pn = start;
+    info->end_pn = end;
     info->type = type;
 }
-unsigned char bootmmmap[MACHINE_MMSIZE >> PAGE_SHIFT];
-/*
+
+unsigned int insert_mminfo(struct bootmm *mm, unsigned int start, unsigned int end, unsigned int type)
+{
+    /*
+* This function insert a memory segment
 * return value list:
-*		0 -> insert_mminfo failed
-*		1 -> insert non-related mm_segment
+*		0 -> insert failed
+*		1 -> insert non-related segment
 *		2 -> insert forward-connecting segment
-*		4 -> insert following-connecting segment
-*		6 -> insert forward-connecting segment to after-last position
-*		7 -> insert bridge-connecting segment(remove_mminfo is called
-for deleting
---
+*		3 -> insert next-connecting segment
+*		4 -> insert forward-connecting segment to last position
+*		5 -> insert bridge-connecting segment
 */
-unsigned int insert_mminfo(struct bootmm *mm, unsigned int start, unsigned int end, unsigned int type) {
     unsigned int i;
-    for (i = 0; i < mm->cnt_infos; i++) {
+    for (i = 0; i < mm->count; i++)
+    {
+        // if the type does not match, just continue
         if (mm->info[i].type != type)
-            continue;  // ignore the type-mismatching items to find one likely
-                       // mergable
-        if (mm->info[i].end == start - 1) {
-            // new-in mm is connecting to the forwarding one
-            if ((i + 1) < mm->cnt_infos) {
-                // current info is still not the last segment
-                if (mm->info[i + 1].type != type) {  // next seg is of
-                    mm->info[i].end = end;
+            continue;
+        // if the new block is just after the existing block
+        if (mm->info[i].end_pn == start - 1)
+        {
+            // current block is not the last segment
+            if ((i + 1) < mm->count)
+            {
+                // the next existing segment is of different type
+                if (mm->info[i + 1].type != type)
+                {
+                    // merge the new block with the forwarding segment
+                    mm->info[i].end_pn = end;
                     return 2;
-                } else {
-                    if (mm->info[i + 1].start - 1 == end) {
-                        mm->info[i].end = mm->info[i + 1].end;
-                        remove_mminfo(mm, i + 1);
-                        return 7;
-                    }
                 }
-            } else {  // current info is the last segment
+                else if (mm->info[i + 1].start_pn - 1 == end)
+                {
+                    //if can merge to the next segment
+                    mm->info[i].end_pn = mm->info[i + 1].end_pn;
+                    if (remove_mminfo(mm, i + 1))
+                        //remove the next segment after merge together
+                        return 5;
+                }
+            }
+            else
+            {
+                // current info is the last segment, there is no next segment
                 // extend the last segment to containing the new-in mm
-                mm->info[i].end = end;
-                return 6;
+                mm->info[i].end_pn = end;
+                return 4;
             }
         }
-        if (mm->info[i].start - 1 == end) {
-            // new-in mm is connecting to the following one
-            kernel_printf("type of %d : %x, type: %x", i, mm->info[i].type, type);
-            mm->info[i].start = start;
-            return 4;
+        // if the new block is just before the existing block
+        if (mm->info[i].start_pn - 1 == end)
+        {
+            mm->info[i].start_pn = start;
+            return 3;
         }
     }
-
-    if (mm->cnt_infos >= MAX_INFO)
-        return 0;  // cannot
-    set_mminfo(mm->info + mm->cnt_infos, start, end, type);
-    ++mm->cnt_infos;
-    return 1;  // individual segment(non-connecting to any other)
-}
-
-/* get one sequential memory area to be split into two parts
- * (set the former one.end = split_start-1)
- * (set the latter one.start = split_start)
- */
-unsigned int split_mminfo(struct bootmm *mm, unsigned int index, unsigned int split_start) {
-    unsigned int start, end;
-    unsigned int tmp;
-
-    start = mm->info[index].start;
-    end = mm->info[index].end;
-    split_start &= PAGE_ALIGN;
-
-    if ((split_start <= start) || (split_start >= end))
-        return 0;  // split_start out of range
-
-    if (mm->cnt_infos == MAX_INFO)
-        return 0;  // number of segments are reaching max, cannot alloc anymore
-                   // segments
-    // using copy and move, to get a mirror segment of mm->info[index]
-    for (tmp = mm->cnt_infos - 1; tmp >= index; --tmp) {
-        mm->info[tmp + 1] = mm->info[tmp];
-    }
-    mm->info[index].end = split_start - 1;
-    mm->info[index + 1].start = split_start;
-    mm->cnt_infos++;
+    // there does not exist any block to merge
+    if (mm->count >= MAX_INFO)
+        return 0; // cannot insert since beyond the limit
+    // set information of inserting segment
+    set_mminfo(mm->info + mm->count, start, end, type);
+    mm->count++;
     return 1;
 }
 
-// remove the mm->info[index]
-void remove_mminfo(struct bootmm *mm, unsigned int index) {
+unsigned int remove_mminfo(struct bootmm *mm, unsigned int index)
+{
+    /*
+* This function remove a memory segment
+* return value list:
+*		0 -> remove failed
+*		1 -> remove succeeded		
+*/
     unsigned int i;
-    if (index >= mm->cnt_infos)
-        return;
-
-    if (index + 1 < mm->cnt_infos) {
-        for (i = (index + 1); i < mm->cnt_infos; i++) {
-            mm->info[i - 1] = mm->info[i];
-        }
+    // if the input index exceed the limit, remove failed
+    if (index >= mm->count)
+        return 0;
+    // remove this segment, and move the array ahead
+    for (i = (index + 1); i < mm->count; i++)
+    {
+        mm->info[i - 1] = mm->info[i];
     }
-    mm->cnt_infos--;
+    mm->count--;
+    return 1;
 }
 
-void init_bootmm() {
-    unsigned int index;
-    unsigned char *t_map;
-    unsigned int end;
-    end = 16 * 1024 * 1024;
+//initialization for bootmem
+void init_bootmm()
+{
+    // clear the bmm
     kernel_memset(&bmm, 0, sizeof(bmm));
-    bmm.phymm = get_phymm_size();
-    bmm.max_pfn = bmm.phymm >> PAGE_SHIFT;
-    bmm.s_map = bootmmmap;
-    bmm.e_map = bootmmmap + sizeof(bootmmmap);
-    bmm.cnt_infos = 0;
-    kernel_memset(bmm.s_map, PAGE_FREE, sizeof(bootmmmap));
-    insert_mminfo(&bmm, 0, (unsigned int)(end - 1), _MM_KERNEL);
-    bmm.last_alloc_end = (((unsigned int)(end) >> PAGE_SHIFT) - 1);
 
-    for (index = 0; index<end>> PAGE_SHIFT; index++) {
-        bmm.s_map[index] = PAGE_USED;
+    unsigned int index;
+
+    // get the physical memory size
+    bmm.phy_size = MACHINE_MMSIZE;
+    // calculate the max page number
+    bmm.max_pn = bmm.phy_size >> PAGE_SHIFT;
+
+    // record the boot map's address
+    bmm.s_map = bootmap;
+    bmm.e_map = bootmap + sizeof(bootmap);
+
+    // set the bit map free
+    kernel_memset(bmm.s_map, PAGE_USED, bmm.e_map - bmm.s_map);
+
+    // the segment count is set to 0
+    bmm.count = 0;
+
+    // insert the segment for kernel usage
+    insert_mminfo(&bmm, 0, (unsigned int)(KERNAL_MMSIZE - 1), _MM_KERNEL);
+
+    // record the last allocated page number
+    bmm.last_alloc = (((unsigned int)(KERNAL_MMSIZE) >> PAGE_SHIFT) - 1);
+
+    for (index = (KERNAL_MMSIZE) >> PAGE_SHIFT; index < bmm.max_pn; index++)
+    {
+        bmm.s_map[index] = PAGE_FREE;
+    }
+
+    bootmap_info();
+}
+
+// print the boot map information
+void bootmap_info()
+{
+    unsigned int index;
+    kernel_printf("Mem Map:\n");
+    for (index = 0; index < bmm.count; index++)
+    {
+        kernel_printf("\t%x-%x : %s\n", bmm.info[index].start_pn, bmm.info[index].end_pn, mem_msg[bmm.info[index].type]);
     }
 }
 
-/*
- * set value of page-bitmap-indicator
- * @param s_pfn	: page frame start node
- * @param cnt	: the number of pages to be set
- * @param value	: the value to be set
+unsigned char *find_pages(unsigned int count, unsigned int s_pn, unsigned int e_pn, unsigned int align_pn)
+{
+    /*
+ * This function is to find continuous number of pages to allocate
+ * count : the number of pages requested
+ * s_pn : the start page number bound 
+ * e_pn : the end page number bound
+ * return value  = 0 : allocate failed, 
+ *        else return index(page start)
  */
-void set_maps(unsigned int s_pfn, unsigned int cnt, unsigned char value) {
-    while (cnt) {
-        bmm.s_map[s_pfn] = (unsigned char)value;
-        --cnt;
-        ++s_pfn;
-    }
-}
-
-/*
- * This function is to find sequential page_cnt number of pages to allocate
- * @param page_cnt : the number of pages requested
- * @param s_pfn    : the allocating begin page frame node
- * @param e_pfn	   : the allocating end page frame node
- * return value  = 0 :: allocate failed, else return index(page start)
- */
-unsigned char *find_pages(unsigned int page_cnt, unsigned int s_pfn, unsigned int e_pfn, unsigned int align_pfn) {
     unsigned int index, tmp;
     unsigned int cnt;
 
-    s_pfn += (align_pfn - 1);
-    s_pfn &= ~(align_pfn - 1);
+    // align the input page number
+    s_pn += (align_pn - 1);
+    s_pn &= ~(align_pn - 1);
 
-    for (index = s_pfn; index < e_pfn;) {
-        if (bmm.s_map[index] == PAGE_USED) {
+    for (index = s_pn; index < e_pn;)
+    {
+        // if current page is used, index ++
+        if (bmm.s_map[index] == PAGE_USED)
+        {
             ++index;
             continue;
         }
-
-        cnt = page_cnt;
+        cnt = count;
         tmp = index;
-        while (cnt) {
-            if (tmp >= e_pfn)
+        while (cnt)
+        {
+            if (tmp >= e_pn)
                 return 0;
-            // reaching end, but allocate request still cannot be satisfied
+            // cannot find memory segment satisfies the requirements
 
-            if (bmm.s_map[tmp] == PAGE_FREE) {
-                tmp++;  // find next possible free page
+            // check if there exist continuous pages to allocate
+            if (bmm.s_map[tmp] == PAGE_FREE)
+            {
+                tmp++;
                 cnt--;
             }
-            if (bmm.s_map[tmp] == PAGE_USED) {
+            if (bmm.s_map[tmp] == PAGE_USED)
+            {
                 break;
             }
         }
-        if (cnt == 0) {  // cnt = 0 indicates that the specified page-sequence found
-            bmm.last_alloc_end = tmp - 1;
-            set_maps(index, page_cnt, PAGE_USED);
+        if (cnt == 0)
+        { // cnt = 0 indicates that the specified page-sequence found
+            //record the last alloc page number
+            bmm.last_alloc = tmp - 1;
+            // set the bootmm maps
+            set_maps(index, count, PAGE_USED);
             return (unsigned char *)(index << PAGE_SHIFT);
-        } else {
-            index = tmp + align_pfn;  // there will be no possible memory space
-                                      // to be allocated before tmp
+        }
+        else
+        {
+            index = tmp + align_pn;
         }
     }
     return 0;
 }
 
-unsigned char *bootmm_alloc_pages(unsigned int size, unsigned int type, unsigned int align) {
-    unsigned int size_inpages;
-    unsigned char *res;
-
-    size += ((1 << PAGE_SHIFT) - 1);
-    size &= PAGE_ALIGN;
-    size_inpages = size >> PAGE_SHIFT;
-
-    // in normal case, going forward is most likely to find suitable area
-    res = find_pages(size_inpages, bmm.last_alloc_end + 1, bmm.max_pfn, align >> PAGE_SHIFT);
-    if (res) {
-        insert_mminfo(&bmm, (unsigned int)res, (unsigned int)res + size - 1, type);
-        return res;
+void set_maps(unsigned int s_pn, unsigned int cnt, unsigned char value)
+{
+    /*
+ * set value of bitmap
+ *  s_pn : start page number
+ *  cnt	: the number of pages to be set
+ *  value : the value to be set
+ */
+    while (cnt)
+    {
+        bmm.s_map[s_pn] = (unsigned char)value;
+        --cnt;
+        ++s_pn;
     }
-
-    // when system request a lot of operations in booting, then some free area
-    // will appear in the front part
-    res = find_pages(size_inpages, 0, bmm.last_alloc_end, align >> PAGE_SHIFT);
-    if (res) {
-        insert_mminfo(&bmm, (unsigned int)res, (unsigned int)res + size - 1, type);
-        return res;
-    }
-    return 0;  // not found, return NULL
 }
 
-void bootmap_info(unsigned char *msg) {
-    unsigned int index;
-    kernel_printf("%s :\n", msg);
-    for (index = 0; index < bmm.cnt_infos; ++index) {
-        kernel_printf("\t%x-%x : %s\n", bmm.info[index].start, bmm.info[index].end, mem_msg[bmm.info[index].type]);
+unsigned char *bootmm_alloc_pages(unsigned int size, unsigned int type, unsigned int align)
+{
+    /*
+* allocate page for bootmm usage
+* size : required memory size 
+* type : type of required memory size 
+* return value = 0 : allocate failed, 
+*           else return index(page start)
+*/
+    unsigned int index, tmp;
+    unsigned int cnt, t_cnt;
+    unsigned char *res;
+
+    // align operation
+    size += ((1 << PAGE_SHIFT) - 1);
+    size &= (~((1 << PAGE_SHIFT) - 1));
+    // calculate the page number of required size
+    cnt = size >> PAGE_SHIFT;
+
+    // first search from last_alloc to the end
+    res = find_pages(cnt, bmm.last_alloc + 1, bmm.max_pn, align >> PAGE_SHIFT);
+    if (res)
+    {
+        if (insert_mminfo(&bmm, (unsigned int)res, (unsigned int)res + size - 1, type))
+            return res;
+    }
+
+    // then search form 0 to last_alloc
+    res = find_pages(cnt, 0, bmm.last_alloc, align >> PAGE_SHIFT);
+    if (res)
+    {
+        if (insert_mminfo(&bmm, (unsigned int)res, (unsigned int)res + size - 1, type))
+            return res;
+    }
+
+    // not found or insert failed, return 0
+    return 0;
+}
+
+unsigned int split_mminfo(struct bootmm *mm, unsigned int index, unsigned int split_start)
+{
+    /* get one sequential memory area to be split into two parts
+ *  set the former one.end = split_start-1 
+ *  set the latter one.start = split_start
+ *  return 0 if failed else return 1
+ */
+    unsigned int start, end;
+    unsigned int tmp;
+
+    start = mm->info[index].start_pn;
+    end = mm->info[index].end_pn;
+    // align operation
+    split_start &= (~((1 << PAGE_SHIFT) - 1));
+
+    if ((split_start <= start) || (split_start >= end))
+        return 0; // split_start out of range
+
+    if (mm->count == MAX_INFO)
+        return 0; // number of segments are reaching max, cannot alloc anymore segments
+
+    // using copy and move, to get a mirror segment of mm->info[index]
+    for (tmp = mm->count - 1; tmp >= index; --tmp)
+    {
+        mm->info[tmp + 1] = mm->info[tmp];
+    }
+    mm->info[index].end_pn = split_start - 1;
+    mm->info[index + 1].start_pn = split_start;
+    mm->count++;
+    return 1;
+}
+
+unsigned int bootmm_free_pages(unsigned int start, unsigned size)
+{
+/* free pages of size from start in the bootmm
+ *  return 0 if failed else return 1
+ */
+
+    unsigned int index, cnt;
+    // align the size
+    size &= ~((1 << PAGE_SHIFT) - 1);
+    cnt = size >> PAGE_SHIFT ;
+    if (!cnt) return 1;
+
+    start &= ~((1 << PAGE_SHIFT) - 1);
+    for (index = 0; index < bmm.count; index++)
+    {
+        // find the block that cover the input start
+        if (bmm.info[index].end_pn < start)
+            continue;
+        if (bmm.info[index].start_pn > start)
+            continue;
+        if (start + size - 1 > bmm.info[index].end_pn)
+            continue;
+        break;
+    }
+    if (index == bmm.count)
+    {
+        kernel_printf("bootmm_free_pages: not alloc space(%x:%x)\n", start, size);
+        return 0;
+    }
+    // find the segment, then split and delete
+    set_maps(start >> PAGE_SHIFT, cnt, PAGE_FREE);
+    if (bmm.info[index].start_pn == start)
+    {
+        if (bmm.info[index].end_pn == (start + size - 1))
+            remove_mminfo(&bmm, index);
+        else
+            set_mminfo(&(bmm.info[index]), start + size, bmm.info[index].end_pn, bmm.info[index].type);
+    }
+    else
+    {
+        if (bmm.info[index].end_pn == (start + size - 1))
+            set_mminfo(&(bmm.info[index]), bmm.info[index].start_pn, start - 1, bmm.info[index].type);
+        else
+        {
+            split_mminfo(&bmm, index, start);
+            split_mminfo(&bmm, index + 1, start + size);
+            remove_mminfo(&bmm, index + 1);
+        }
     }
 }

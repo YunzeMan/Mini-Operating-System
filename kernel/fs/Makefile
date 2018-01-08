@@ -1,3 +1,3 @@
-DIRS := ext2 fat fscache
+DIRS := fat fscache
 
 include $(SUB_MAKE_INCLUDE)

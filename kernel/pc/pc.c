@@ -100,7 +100,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             int k;
             for (k = 0; k < 8; k++)
             {
-                curr_proc[curr_queue + 1] = (curr_proc[curr_queue + 1] + 1) % 7;
+                curr_proc[curr_queue + 1] = (curr_proc[curr_queue + 1] + 1) & 7;
                 if(task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].ASID < 0)
                     break;
             }
@@ -132,7 +132,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             int k;
             for (k = 0; k < 8; k++)
             {
-                curr_proc[curr_queue - 1] = (curr_proc[curr_queue - 1] + 1) % 7;
+                curr_proc[curr_queue - 1] = (curr_proc[curr_queue - 1] + 1) & 7;
                 if(task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].ASID < 0)
                     break;
             }
@@ -213,7 +213,7 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
     int curr_pos = curr_proc[priority]; // Do not change the curr_proc value
     for (i = 0; i < 8; i++)
     {
-        curr_pos = (curr_pos + 1) % 7;
+        curr_pos = (curr_pos + 1) & 7;
         if(task_queue[priority].pcb[curr_pos].ASID < 0)
             break;
     }
@@ -272,7 +272,7 @@ int pc_kill(int proc) {
     {
         for(j = 0; j < 8; j++)
         {
-            curr_proc[i] = (curr_proc[i] + 1) % 7;
+            curr_proc[i] = (curr_proc[i] + 1) & 7;
             if(task_queue[i].pcb[curr_proc[i]].ASID = proc){
                 task_queue[i].pcb[curr_proc[i]].ASID = -1;
                 return 2;

@@ -18,22 +18,22 @@ int ps_buffer_index;
 struct vfs* vfsfile;
 
 void initial_vfs() {
-    vfsfile->find = &fs_find;
-    vfsfile->init = &init_fs;
-    vfsfile->open = &fs_open;
-    vfsfile->close = &fs_close;
-    vfsfile->read = &fs_read;
-    vfsfile->close = &fs_close;
-    vfsfile->fflush = &fs_fflush;
-    vfsfile->create = &fs_create;
-    vfsfile->mkdir = &fs_mkdir;
-    vfsfile->rmdir = &fs_rmdir;
-    vfsfile->rm = &fs_rm;
-    vfsfile->mv = &fs_mv;
-    vfsfile->cp = &fs_cp;
-    vfsfile->open_dir = &fs_open_dir;
-    vfsfile->read_dir = &fs_read_dir;
-    vfsfile->cat = &fs_cat;
+    vfsfile->fat32_file->find = &fs_find;
+    vfsfile->fat32_file->init = &init_fs;
+    vfsfile->fat32_file->open = &fs_open;
+    vfsfile->fat32_file->close = &fs_close;
+    vfsfile->fat32_file->read = &fs_read;
+    vfsfile->fat32_file->close = &fs_close;
+    vfsfile->fat32_file->fflush = &fs_fflush;
+    vfsfile->fat32_file->create = &fs_create;
+    vfsfile->fat32_file->mkdir = &fs_mkdir;
+    vfsfile->fat32_file->rmdir = &fs_rmdir;
+    vfsfile->fat32_file->rm = &fs_rm;
+    vfsfile->fat32_file->mv = &fs_mv;
+    vfsfile->fat32_file->cp = &fs_cp;
+    vfsfile->fat32_file->open_dir = &fs_open_dir;
+    vfsfile->fat32_file->read_dir = &fs_read_dir;
+    vfsfile->fat32_file->cat = &fs_cat;
 }
 
 void test_syscall4() {
@@ -109,7 +109,6 @@ void ps() {
 }
 
 void parse_cmd() {
-    initial_vfs();
     unsigned int result = 0;
     char dir[32];
     char c;
@@ -175,7 +174,11 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "time") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-        pc_create(2, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time", 4);
+        pc_create(20, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time", 4);
+    } else if (kernel_strcmp(ps_buffer, "time7") == 0) {
+        unsigned int init_gp;
+        asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+        pc_create(21, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time7", 7); 
     } else if (kernel_strcmp(ps_buffer, "proc") == 0) {
         result = proc_demo_create();
         kernel_printf("proc return with %d\n", result);
