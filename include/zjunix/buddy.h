@@ -16,15 +16,16 @@
 struct page 
 {
     unsigned int flag;       // the declaration of the usage of this page
-    //unsigned int reference;  
+    unsigned int reference;  
     struct list_head list;   // double-way list
     void *virtual;           // default 0x(-1)
     unsigned int bplevel;    // the level of the page
     unsigned int slabp;      //if the page is used by slab system, then slabp represents the base-addr of free space
 
-//TODO : move the slab head here
     void *end_ptr;  
     unsigned int nr_objs;  //numbers of memory objects that has been allocated
+    unsigned int max_object;
+    void *freeobj; 
 };
 
 

@@ -147,6 +147,41 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "ps") == 0) {
         result = print_proc();
         kernel_printf("ps return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "mmtest1") == 0) {
+        void * addr1 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr1);
+        void * addr2 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr2);
+        kfree(addr1);
+        //kfree(addr2);
+        
+       // void * addr3 = kmalloc(512);
+       // kernel_printf("kmalloc : %x, size = 0.5KB\n", addr3);
+       // void * addr4 = kmalloc(512);
+       // kernel_printf("kmalloc : %x, size = 0.5KB\n", addr4);
+
+    
+    } else if (kernel_strcmp(ps_buffer, "mmtest2") == 0) {
+        void * addr1 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr1);
+        void * addr2 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr2);
+        void * addr3 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr3);
+       // void * addr4 = kmalloc(512);
+       // kernel_printf("kmalloc : %x, size = 0.5KB\n", addr4);
+        /*void * addr5 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr5);
+        void * addr6 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr6);
+        void * addr7 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr7);
+        void * addr8 = kmalloc(512);
+        kernel_printf("kmalloc : %x, size = 0.5KB\n", addr8);*/
+       // kfree(addr1);
+       // kfree(addr2);
+
+    
     } else if (kernel_strcmp(ps_buffer, "kill") == 0) {
         int pid = param[0] - '0';
         kernel_printf("Killing process %d\n", pid);

@@ -15,14 +15,18 @@ void init_pages(unsigned int start_pn, unsigned int end_pn)
     unsigned int i;
     for (i = start_pn; i < end_pn; i++)
     {
-        clean_flag(pages + i, -1);
-        set_flag(pages + i, _PAGE_RESERVED);
+        (pages + i)->flag = 0;
+        //set_flag(pages + i,);
         //(pages + i)->reference = 1;
-        (pages + i)->virtual = (void *)(-1);
+        (pages + i)->reference = 0;
+        (pages + i)
+            ->virtual = (void *)(-1);
         (pages + i)->bplevel = (-1);
         (pages + i)->slabp = 0; // initially, the free space is the whole page
         (pages + i)->nr_objs = 0;
         (pages + i)->end_ptr = 0;
+        (pages + i)->freeobj = 0;
+        (pages + i)->max_object = 0;
         INIT_LIST_HEAD(&(pages[i].list));
     }
 }
@@ -109,7 +113,8 @@ void __free_pages(struct page *page, unsigned int bplevel)
     unsigned int combined_id;
     struct page *buddy_page;
 
-    clean_flag(page, -1);
+    page->flag = 0;
+    page->reference = 0;
     lockup(&buddy.lock);
 
     // get the page id in buddy system
@@ -150,6 +155,8 @@ struct page *__alloc_pages(unsigned int bplevel)
 * return 0 if there is no pages to alloc
 *   else return the page address in kernel controller
 */
+    kernel_printf(".....not here.....\n");
+
     unsigned int current_order, size;
     struct page *page, *buddy_page;
     struct freelist *free;
@@ -167,7 +174,7 @@ struct page *__alloc_pages(unsigned int bplevel)
             list_del_init(&(page->list));
             set_bplevel(page, bplevel);
             // set the flag to declare that the page is in use
-            set_flag(page, _PAGE_ALLOCED);
+            page->flag = 1;
             free->count--;
             // calculate the current pages number per block
             size = 1 << current_order;
@@ -203,12 +210,16 @@ void *alloc_pages(unsigned int bplevel)
 
 void free_pages(void *addr, unsigned int bplevel)
 {
-/*
+    /*
 * function to free a page from addr
 */
     // if the input address matches the bplevel then free the page
-    if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->bplevel == bplevel)
+    kernel_printf(".....not here\n");
+    if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->flag == 1)
     {
-        __free_pages(pages + ((unsigned int)addr >> PAGE_SHIFT), bplevel);
+        if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->bplevel == bplevel)
+        {
+            __free_pages(pages + ((unsigned int)addr >> PAGE_SHIFT), bplevel);
+        }
     }
 }

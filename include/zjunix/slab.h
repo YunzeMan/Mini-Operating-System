@@ -52,7 +52,7 @@ void init_kmem_cpu(struct kmem_cache_cpu *kcpu);
 
 void format_slabpage(struct kmem_cache *cache, struct page *page);
 
-void slab_free(struct kmem_cache *cache, void *object);
+void slab_free(struct kmem_cache *cache, void *object, void *temp);
 
 void *slab_alloc(struct kmem_cache *cache);
 
