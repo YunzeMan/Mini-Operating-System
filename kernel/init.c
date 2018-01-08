@@ -12,7 +12,7 @@
 #include <zjunix/slab.h>
 #include <zjunix/syscall.h>
 #include <zjunix/time.h>
-#include <zjunix/vfs.h>
+#include <zjunix/fs/vfs.h>
 #include "../usr/ps.h"
 
 void machine_info() {

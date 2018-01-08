@@ -5,14 +5,14 @@
 #include <zjunix/fs/fat.h>
 
 struct ext2 {
-    u32 (*init)init_myext2();
-    u32 (*find)myext2_find();
-    u32 (*open)myext2_open();
-    u32 (*close)myext2_close();
-    u32 (*read)myext2_read();
-    u32 (*write)myext2_write();
-    u32 (*fflush)myext2_fflush();
-    void (*lseek)myext2_lseek();
+    u32 (*init)();
+    u32 (*find)();
+    u32 (*open)();
+    u32 (*close)();
+    u32 (*read)();
+    u32 (*write)();
+    u32 (*fflush)();
+    void (*lseek)();
 };
 
 struct fat32 {

@@ -7,8 +7,7 @@
 #define EXT2_N_BLOCKS 15
 
 /* group descriptor */
-struct myext2_group_desc
-{
+struct myext2_group_desc {
 	u32	bg_block_bitmap;		/* Blocks bitmap block */
 	u32	bg_inode_bitmap;		/* Inodes bitmap block */
 	u32	bg_inode_table;		    /* Inodes table block */

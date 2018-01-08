@@ -1,6 +1,4 @@
 #include "myext2.h"
-#include <zjunix/log.h>
-
 
 u32 init_myext2()
 {

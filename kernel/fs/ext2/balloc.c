@@ -1,30 +1,27 @@
 #include "balloc.h"
-#include <zjunix/fs/buffer_head.h>
 
-
-/* 获得组描述块 */
+/* get group descriptor */
 struct myext2_group_desc * myext2_get_group_desc(struct myext2_sb_info * sb, unsigned int block_group, struct buffer_head ** bh)
 {
     u32 group_desc;  
     u32 offset;  
     struct myext2_group_desc * desc;    
-    /*如果参数大于组的数目，说明参数有问题，返回NULL*/  
+    /* if the parameter is larger than the number of group, then return NULL */  
     if (block_group >= sb->s_groups_count) {  
-        return NULL;  
+        return desc;  
     }  
-    /*右移这些位就等于是除以一个块拥有组描述符的数目。*/  
+    /* right shift such bits equals divide the number of group descriptor*/  
     group_desc = block_group >> sb->s_desc_per_block_bits;  
-    /*这里的offset就是在块内的第几个描述符*/  
+    /* the offset mean the number of group descriptor in group */  
     offset = block_group & (sb->s_desc_per_block - 1);  
-    /*如果为空，就说明ext2出问题了*/  
+    /* if sb's group descriptor is empty then there is a error with ext2 */  
     if (!sb->s_group_desc[group_desc]) {  
-        return NULL;  
-    }  
-    /*描述符指针指向对应的buffer_head->b_data就是组描述符所在组的第一个组描述符*/  
+        return desc;  
+    }    
     desc = (struct myext2_group_desc *) sb->s_group_desc[group_desc]->b_data;  
-    /*如果参数bh不为空，就赋值组描述符的buffer_head给bh*/  
+    /* if the parameter bh is not empty then assign group descriptor's buffer_head to bh*/  
     if (bh)  
         *bh = sb->s_group_desc[group_desc];  
-    /*返回想要的组描述符*/  
+    /* return group descriptor */  
     return desc + offset; 
 }
