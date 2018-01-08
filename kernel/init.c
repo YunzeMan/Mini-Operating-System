@@ -63,7 +63,7 @@ void init_kernel() {
     log(LOG_START, "File System.");
     init_fs();
     // new add vfs
-    initial_vfs();
+    //initial_vfs();
     log(LOG_END, "File System.");
     // System call
     log(LOG_START, "System Calls.");

@@ -155,7 +155,7 @@ struct page *__alloc_pages(unsigned int bplevel)
 * return 0 if there is no pages to alloc
 *   else return the page address in kernel controller
 */
-    kernel_printf(".....not here.....\n");
+    //kernel_printf(".....not here.....\n");
 
     unsigned int current_order, size;
     struct page *page, *buddy_page;
@@ -214,7 +214,7 @@ void free_pages(void *addr, unsigned int bplevel)
 * function to free a page from addr
 */
     // if the input address matches the bplevel then free the page
-    kernel_printf(".....not here\n");
+    //kernel_printf(".....not here\n");
     if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->flag == 1)
     {
         if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->bplevel == bplevel)
