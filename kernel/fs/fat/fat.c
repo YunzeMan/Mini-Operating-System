@@ -407,7 +407,7 @@ u32 fs_read(FILE *file, u8 *buf, u32 count) {
     u32 index;
 
 #ifdef FS_DEBUG
-    kernel_printf("fs_read: count %d\n", count);
+    kernel_printf("  fs_read: count %d\n", count);
     disable_interrupts();
 #endif  // ! FS_DEBUG
     /* If file is empty */
@@ -428,10 +428,10 @@ u32 fs_read(FILE *file, u8 *buf, u32 count) {
     end_byte = (file->loc + count - 1) & ((fat_info.BPB.attr.sectors_per_cluster << 9) - 1);
 
 #ifdef FS_DEBUG
-    kernel_printf("start cluster: %d\n", start_clus);
-    kernel_printf("start byte: %d\n", start_byte);
-    kernel_printf("end cluster: %d\n", end_clus);
-    kernel_printf("end byte: %d\n", end_byte);
+    kernel_printf("  start cluster: %d\n", start_clus);
+    kernel_printf("  start byte: %d\n", start_byte);
+    kernel_printf("  end cluster: %d\n", end_clus);
+    kernel_printf("  end byte: %d\n", end_byte);
 #endif  // ! FS_DEBUG
     /* Open first cluster to read */
     for (i = 0; i < start_clus; i++) {
@@ -470,7 +470,7 @@ u32 fs_read(FILE *file, u8 *buf, u32 count) {
 fs_read_end:
 
 #ifdef FS_DEBUG
-    kernel_printf("fs_read: count %d\n", count);
+    kernel_printf("  fs_read: count %d\n", count);
     enable_interrupts();
 #endif  // ! FS_DEBUG
     /* modify file pointer */

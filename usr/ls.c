@@ -63,7 +63,7 @@ int ls(char *para) {
     next = each_param(p, pwd, 0, ' ');
 
     if (fs_open_dir(&dir, pwd)) {
-        kernel_printf("open dir(%s) failed : No such directory!\n", pwd);
+        kernel_printf("  open dir(%s) failed : No such directory!\n", pwd);
         return 1;
     }
 
@@ -71,14 +71,14 @@ readdir:
     r = fs_read_dir(&dir, (unsigned char *)&entry);
     if (1 != r) {
         if (-1 == r) {
-            kernel_printf("\n");
+            kernel_printf("  \n");
         } else {
             get_filename((unsigned char *)&entry, name);
             if (entry.attr == 0x10)  // sub dir
-                kernel_printf("%s/", name);
+                kernel_printf("  %s/", name);
             else
-                kernel_printf("%s", name);
-            kernel_printf("\n");
+                kernel_printf("  %s", name);
+            kernel_printf("  \n");
             goto readdir;
         }
     } else
@@ -105,7 +105,7 @@ int ls_l(char *para) {
     next = each_param(p, pwd, 0, ' ');
 
     if (fs_open_dir(&dir, pwd)) {
-        kernel_printf("open dir(%s) failed : No such directory!\n", pwd);
+        kernel_printf("  open dir(%s) failed : No such directory!\n", pwd);
         return 1;
     }
 
@@ -113,7 +113,7 @@ readdir:
     r = fs_read_dir(&dir, (unsigned char *)&entry);
     if (1 != r) {
         if (-1 == r) {
-            kernel_printf("\n");
+            kernel_printf("  \n");
         } 
         else {
             get_filename((unsigned char *)&entry, name);
@@ -122,18 +122,18 @@ readdir:
             get_filetime((unsigned char *)&entry, time);
             if (entry.attr == 0x10) {
                 // sub dir
-                kernel_printf("%s", size);
-                kernel_printf("%s", date);
-                kernel_printf("%s", time);
-                kernel_printf("%s/", name);
+                kernel_printf("  %s", size);
+                kernel_printf("  %s", date);
+                kernel_printf("  %s", time);
+                kernel_printf("  %s/", name);
             }
             else {
-                kernel_printf("%s", size);
-                kernel_printf("%s", date);
-                kernel_printf("%s", time);
-                kernel_printf("%s", name);
+                kernel_printf("  %s", size);
+                kernel_printf("  %s", date);
+                kernel_printf("  %s", time);
+                kernel_printf("  %s", name);
             }
-            kernel_printf("\n");
+            kernel_printf("  \n");
             goto readdir;
         }
     } else
@@ -144,6 +144,6 @@ readdir:
 
 int ls_help() {
     char help[32] = "Usage: ls [OPTION]... [FILE]...";
-    kernel_printf("%s", help);
+    kernel_printf("  %s", help);
     return 1;
 }

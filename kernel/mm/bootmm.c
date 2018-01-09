@@ -148,10 +148,10 @@ void init_bootmm()
 void bootmap_info()
 {
     unsigned int index;
-    kernel_printf("Mem Map:\n");
+    kernel_printf("  Mem Map:\n");
     for (index = 0; index < bmm.count; index++)
     {
-        kernel_printf("\t%x-%x : %s\n", bmm.info[index].start_pn, bmm.info[index].end_pn, mem_msg[bmm.info[index].type]);
+        kernel_printf("  \t%x-%x : %s\n", bmm.info[index].start_pn, bmm.info[index].end_pn, mem_msg[bmm.info[index].type]);
     }
 }
 
@@ -328,7 +328,7 @@ unsigned int bootmm_free_pages(unsigned int start, unsigned size)
     }
     if (index == bmm.count)
     {
-        kernel_printf("bootmm_free_pages: not alloc space(%x:%x)\n", start, size);
+        kernel_printf("  bootmm_free_pages: not alloc space(%x:%x)\n", start, size);
         return 0;
     }
     // find the segment, then split and delete

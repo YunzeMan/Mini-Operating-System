@@ -44,7 +44,7 @@ void print_wptr() {
     col = cursor_col;
     cursor_row = 19;
     cursor_col = 32;
-    kernel_printf("Wptr: %x\n", buffer_wptr);
+    kernel_printf("  Wptr: %x\n", buffer_wptr);
     cursor_row = row;
     cursor_col = col;
 }
@@ -55,7 +55,7 @@ void print_rptr() {
     col = cursor_col;
     cursor_row = 20;
     cursor_col = 32;
-    kernel_printf("Rptr: %x\n", buffer_rptr);
+    kernel_printf("  Rptr: %x\n", buffer_rptr);
     cursor_row = row;
     cursor_col = col;
 }
@@ -68,14 +68,14 @@ void print_buffer() {
     cursor_row = 21;
     cursor_col = 32;
     for (i = 0; i < 32; i++) {
-        kernel_printf("%x ", ready[i]);
+        kernel_printf("  %x ", ready[i]);
         if (7 == (i & 7)) {
             cursor_col = 32;
             cursor_row++;
         }
     }
     for (i = 0; i < 32; i++) {
-        kernel_printf("%x ", buffer[i]);
+        kernel_printf("  %x ", buffer[i]);
         if (7 == (i & 7)) {
             cursor_col = 32;
             cursor_row++;
@@ -91,7 +91,7 @@ void print_curr_key(int key) {
     col = cursor_col;
     cursor_row = 18;
     cursor_col = 32;
-    kernel_printf("Key: %x\n", key);
+    kernel_printf("  Key: %x\n", key);
     cursor_row = row;
     cursor_col = col;
 }
@@ -102,7 +102,7 @@ void print_curr_char(int key) {
     col = cursor_col;
     cursor_row = 17;
     cursor_col = 32;
-    kernel_printf("Char: %c\n", key);
+    kernel_printf("  Char: %c\n", key);
     cursor_row = row;
     cursor_col = col;
 }

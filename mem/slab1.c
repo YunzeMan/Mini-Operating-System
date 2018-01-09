@@ -27,12 +27,12 @@ void init_slab()
     }
 
     //TODO: print
-    kernel_printf("Setup Slub ok :\n");
-    kernel_printf("\tcurrent slab cache size list:\n\t");
+    kernel_printf("  Setup Slub ok :\n");
+    kernel_printf("  \tcurrent slab cache size list:\n\t");
     for (order = 0; order < 10; order++) {
-        kernel_printf("%x ", kmalloc_caches[order].objsize);
+        kernel_printf("  %x ", kmalloc_caches[order].objsize);
     }
-    kernel_printf("\n");
+    kernel_printf("  \n");
 }
 
 void init_each_slab(struct kmem_cache *cache, unsigned int size) 
@@ -109,11 +109,11 @@ slalloc_check:
             if (!newpage) {
                 // allocate failed, memory in system is used up
                 //TODO: implement print
-                kernel_printf("ERROR: slab request one page in cache failed\n");
+                kernel_printf("  ERROR: slab request one page in cache failed\n");
                 while (1);
             }
             //TODO: implement print
-            kernel_printf("\tnew page, index: %x \n", newpage - pages);
+            kernel_printf("  \tnew page, index: %x \n", newpage - pages);
 
             // using standard format to shape the new-allocated page,
             // set the new page to be cpu.page
@@ -174,7 +174,7 @@ void *kmalloc(unsigned int size) {
        unsigned int addr =  (unsigned int)alloc_pages(size >> PAGE_SHIFT);
        if(!addr){
         //TODO: print
-        kernel_printf("ERROR: No available page\n"); 
+        kernel_printf("  ERROR: No available page\n"); 
         while(1);
        }
        return (void *)(KERNEL_ENTRY | addr);
@@ -183,7 +183,7 @@ void *kmalloc(unsigned int size) {
     bf_index = get_slab(size);
     if (bf_index >= 10) {
         //TODO: print
-        kernel_printf("ERROR: No available slab\n");
+        kernel_printf("  ERROR: No available slab\n");
         while (1);
     }
     return (void *)(KERNEL_ENTRY | (unsigned int)slab_alloc(&(kmalloc_caches[bf_index])));
@@ -199,7 +199,7 @@ void slab_free(struct kmem_cache *cache, void *object)
     struct slab_head *s_head = (struct slab_head *)KMEM_ADDR(opage, pages);
 
     if (!(s_head->nr_objs)) {
-        kernel_printf("ERROR : slab_free error!\n");
+        kernel_printf("  ERROR : slab_free error!\n");
         while (1);
     }
 

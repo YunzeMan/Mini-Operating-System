@@ -31,11 +31,11 @@ void buddy_info()
 */
     unsigned int index;
     //TODO: printf function
-    kernel_printf("Buddy-system :\n");
-    kernel_printf("\tstart page-frame number : %x\n", buddy.buddy_start_pfn);
-    kernel_printf("\tend page-frame number : %x\n", buddy.buddy_end_pfn);
+    kernel_printf("  Buddy-system :\n");
+    kernel_printf("  \tstart page-frame number : %x\n", buddy.buddy_start_pfn);
+    kernel_printf("  \tend page-frame number : %x\n", buddy.buddy_end_pfn);
     for (index = 0; index <= MAX_BUDDY_ORDER; ++index) {
-        kernel_printf("\t(%x)# : %x frees\n", index, buddy.freelist[index].nr_free);
+        kernel_printf("  \t(%x)# : %x frees\n", index, buddy.freelist[index].nr_free);
     }
 }
 
@@ -48,7 +48,7 @@ void init_budy()
     bp_base = bootmm_alloc_pages(bpsize * bmm.max_pfn, _MM_KERNEL, 1 << PAGE_SHIFT);
     if (!bp_base) {
         //TODO: print function!  
-        kernel_printf("\nERROR : bootmm_alloc_pages failed!\nInit buddy system failed!\n");
+        kernel_printf("  \nERROR : bootmm_alloc_pages failed!\nInit buddy system failed!\n");
         while (1);
     }
 

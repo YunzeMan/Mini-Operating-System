@@ -19,13 +19,12 @@
  * With this struct we are able to control pid control. When the number of processes gets higher,
  * this way of controling the pid becomes economical.
  */
-typedef struct pidmap
-{
+typedef struct pidmap{
     unsigned int nr_free;
     char page[PAGE_SIZE];
 } pidmap_t;
 
-
+#define RESERVED_PIDS 10
 
 int alloc_pidmap();
 int test_and_set_bit(int offset, void *addr);

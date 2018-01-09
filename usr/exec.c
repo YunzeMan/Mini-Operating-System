@@ -16,7 +16,7 @@ int exec(char* filename) {
     unsigned char buffer[512];
     int result = fs_open(&file, filename);
     if (result != 0) {
-        kernel_printf("File %s not exist\n", filename);
+        kernel_printf("  File %s not exist\n", filename);
         return 1;
     }
     unsigned int size = get_entry_filesize(file.entry.data);
@@ -44,7 +44,7 @@ int exec(char* filename) {
         : "=r"(cp0EntryLo0));
     int (*f)() = (int (*)())(0);
 #ifdef EXEC_DEBUG
-    kernel_printf("Exec load at: 0x%x\n", ENTRY);
+    kernel_printf("  Exec load at: 0x%x\n", ENTRY);
 #endif  // ! EXEC_DEBUG
     int r = f();
     kfree((void*)ENTRY);

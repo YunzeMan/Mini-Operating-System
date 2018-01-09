@@ -16,7 +16,7 @@ void* kernel_memcpy(void* dest, void* src, int len) {
 #pragma GCC optimize("O2")
 void* kernel_memset(void* dest, int b, int len) {
 #ifdef MEMSET_DEBUG
-    kernel_printf("memset:%x,%x,len%x,", (int)dest, b, len);
+    kernel_printf("  memset:%x,%x,len%x,", (int)dest, b, len);
 #endif  // ! MEMSET_DEBUG
     char content = b ? -1 : 0;
     char* deststr = dest;
@@ -25,7 +25,7 @@ void* kernel_memset(void* dest, int b, int len) {
         deststr++;
     }
 #ifdef MEMSET_DEBUG
-    kernel_printf("%x\n", (int)deststr);
+    kernel_printf("  %x\n", (int)deststr);
 #endif  // ! MEMSET_DEBUG
     return dest;
 }

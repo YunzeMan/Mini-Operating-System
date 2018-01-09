@@ -42,7 +42,7 @@ void init_buddy()
     bp_base = bootmm_alloc_pages(bpsize * bmm.max_pn, _MM_KERNEL, 1 << PAGE_SHIFT);
     if (!bp_base)
     {
-        kernel_printf("\nERROR : bootmm_alloc_pages failed!\nInit buddy system failed!\n");
+        kernel_printf("  \nERROR : bootmm_alloc_pages failed!\nInit buddy system failed!\n");
         while (1)
             ;
     }
@@ -93,12 +93,12 @@ void buddy_info()
 {
     // print the buddy information
     unsigned int index;
-    kernel_printf("Buddy-system :\n");
-    kernel_printf("\tstart page-frame number : %x\n", buddy.buddy_start_pn);
-    kernel_printf("\tend page-frame number : %x\n", buddy.buddy_end_pn);
+    kernel_printf("  Buddy-system :\n");
+    kernel_printf("  \tstart page-frame number : %x\n", buddy.buddy_start_pn);
+    kernel_printf("  \tend page-frame number : %x\n", buddy.buddy_end_pn);
     for (index = 0; index <= MAX_BUDDY_ORDER; index++)
     {
-        kernel_printf("\t(%x)# : %x frees\n", index, buddy.freelist[index].count);
+        kernel_printf("  \t(%x)# : %x frees\n", index, buddy.freelist[index].count);
     }
 }
 
@@ -155,7 +155,7 @@ struct page *__alloc_pages(unsigned int bplevel)
 * return 0 if there is no pages to alloc
 *   else return the page address in kernel controller
 */
-    //kernel_printf(".....not here.....\n");
+    //kernel_printf("  .....not here.....\n");
 
     unsigned int current_order, size;
     struct page *page, *buddy_page;
@@ -214,7 +214,7 @@ void free_pages(void *addr, unsigned int bplevel)
 * function to free a page from addr
 */
     // if the input address matches the bplevel then free the page
-    //kernel_printf(".....not here\n");
+    //kernel_printf("  .....not here\n");
     if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->flag == 1)
     {
         if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->bplevel == bplevel)

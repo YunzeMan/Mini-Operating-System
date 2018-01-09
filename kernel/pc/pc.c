@@ -5,8 +5,6 @@
 #include <zjunix/syscall.h>
 #include <zjunix/utils.h>
 
-#define BASIC_TIME_SLICE 10000000 
-
 // The 8-level task queue, higher number stands for higher priority
 task_level task_queue[8];
 
@@ -15,7 +13,7 @@ int curr_queue; // The queue in which current process runs
 
 // Constant time slice, set according to static priority
 unsigned int time_slice[8];
-
+// Bits Map is used for saving the 
 unsigned int bits_map[8];
 
 
@@ -193,7 +191,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
     }
     // If does not find a pcb to exec, print error
     if(i < 0){
-        kernel_puts("Error: PCB[0] is invalid!\n", 0xfff, 0);
+        kernel_puts("  Error: PCB[0] is invalid!\n", 0xfff, 0);
         while (1)
             ;
     }
@@ -249,7 +247,7 @@ int pc_peek(int priority) {
  *@No return value
  */
 void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init_gp, char* name, int priority) { // curr proc cannot change
-    //kernel_puts("pc_create start\n", 0xfff, 0);
+    //kernel_puts("  pc_create start\n", 0xfff, 0);
     int i;
     int curr_pos = curr_proc[priority]; // Do not change the curr_proc value
     for (i = 0; i < 8; i++)
@@ -260,7 +258,7 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
     }
     if(i == 8)
     {
-        kernel_puts("Create Error: Priority queue is full!\n", 0xfff, 0);
+        kernel_puts("  Create Error: Priority queue is full!\n", 0xfff, 0);
         while (1)
             ;
     }
@@ -281,7 +279,7 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
             "syscall\n\t"
             "nop\n\t");
     }
-    //kernel_puts("pc_create end\n", 0xfff, 0);
+    //kernel_puts("  pc_create end\n", 0xfff, 0);
 
 }
 
@@ -324,12 +322,12 @@ void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_contex
 int pc_kill(int proc) {
     // If is init, not allowed to kill
     if (proc == 0){
-        kernel_puts("Error: Init process cannot be killed!\n", 0xfff, 0);
+        kernel_puts("  Error: Init process cannot be killed!\n", 0xfff, 0);
         return 0;
     }
     // If is powershell, not allowed to kill    
     if (proc == 1){
-        kernel_puts("Error: Powershell process cannot be killed!\n", 0xfff, 0);
+        kernel_puts("  Error: Powershell process cannot be killed!\n", 0xfff, 0);
         return 1;
     }
 
@@ -348,7 +346,7 @@ int pc_kill(int proc) {
     }
     if(i < 0)
     { // Print error info, return 3
-        kernel_puts("Error: No process with input ID is found!\n", 0xfff, 0);
+        kernel_puts("  Error: No process with input ID is found!\n", 0xfff, 0);
         return 3;
     }
     return -1; // If return -1, something bad happens
@@ -372,11 +370,11 @@ task_struct* get_curr_pcb() {
  */
 int print_proc() {
     int i, j;
-    kernel_puts("PID\t\tname\t\tstatP\n", 0xfff, 0);
+    kernel_puts("  PID\t\tname\t\tstatP\n", 0xfff, 0);
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++){
             if (task_queue[i].pcb[j].ASID >= 0)
-                kernel_printf(" %x\t\t%s\t\t%d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
+                kernel_printf("   %x\t\t%s\t\t%d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
         }
     }
     return 0;

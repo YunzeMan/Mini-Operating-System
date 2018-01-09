@@ -237,7 +237,7 @@ u32 fs_cat(u8 *path) {
     u8 *buf = (u8 *)kmalloc(file_size + 1);
     fs_read(&cat_file, buf, file_size);
     buf[file_size] = 0;
-    kernel_printf("%s\n", buf);
+    kernel_printf("  %s\n", buf);
     fs_close(&cat_file);
     kfree(buf);
     return 0;
