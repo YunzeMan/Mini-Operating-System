@@ -9,12 +9,15 @@
 
 // The 8-level task queue, higher number stands for higher priority
 task_level task_queue[8];
-// 8 current positions corresponding to 8 queues
-int curr_proc[8];
-int curr_queue; // The queue of current running process
+
+int curr_proc[8];// 8 current positions corresponding to 8 queues
+int curr_queue; // The queue in which current process runs
 
 // Constant time slice, set according to static priority
 unsigned int time_slice[8];
+
+unsigned int bits_map[8];
+
 
 /* Copy the context of the process
  * 
@@ -73,12 +76,15 @@ void init_pc() {
             task_queue[i].pcb[j].ASID = -1;
         curr_proc[i] = -1;
         // Set the the static time slice
-        time_slice[i] = 10000 * (10 - i);
+        time_slice[i] = 1000000 * (10 - i);
+        bits_map[i] = 0;
     }
 
     // Set the Init process's ASID to 0, a special value in order not to schedule it any more
     task_queue[4].pcb[0].ASID = 0;
     task_queue[4].pcb[0].counter = PROC_DEFAULT_TIMESLOTS;
+    task_queue[4].pcb[0].priority = 4;
+
     kernel_strcpy(task_queue[4].pcb[0].name, "init");   // Name is init
     curr_proc[4] = 0;
     curr_queue = 4;
@@ -109,13 +115,16 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
     // Save context
     copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));
     // Save current time slice
+
+    unsigned int compare;
     asm volatile(
-        "mfc0 %1, $9\n\t"
+        "mfc0 %0, $9\n\t"
+        "mfc0 %1, $11\n\t"
         "mtc0 $zero, $9\n\t"
-        : "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice));
-    
+        : "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice), "=r"(compare));    
+
     // Decrement or increment the priority by 1
-    if (task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice < BASIC_TIME_SLICE) // Be preempted, increment priority
+    if (task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice < compare) // Be preempted, increment priority
     { 
         // If not the highest priority, and higher than the basic priority
         if (curr_queue >= 4 && curr_queue != 7)
@@ -130,9 +139,8 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             if(k != 8) // Then the upper priority is not full, curr_proc is updated
             {
                 // Copy the PCB
-                task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].context.epc = task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.epc;
-                task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].context.sp = task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.sp;
-                task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].context.gp = task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.gp;
+                
+                copy_context(pt_context, &(task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].context));                
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].priority = task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority;
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].time_slice = task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice; // Copy the time_slice
                 kernel_strcpy(task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
@@ -143,11 +151,8 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
                 curr_queue = curr_queue + 1;
             }
         }
-    }
-    else // time slice == compare time, decrement the priority
+    }else // time slice == compare time, decrement the priority
     {
-        //kernel_puts("time slice runout start\n", 0xfff, 0);
-
         // Re-assign the time-slice for process
         task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice = 0;
         if (curr_queue > 4)
@@ -162,9 +167,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             if(k != 8) // Then the lower priority is not full, curr_proc is updated
             {
                 // Copy the PCB
-                task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].context.epc = task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.epc;
-                task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].context.sp = task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.sp;
-                task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].context.gp = task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.gp;
+                copy_context(pt_context, &(task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].context));
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].priority = task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority;
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].time_slice = task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice; // Copy the time_slice
                 kernel_strcpy(task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
@@ -175,32 +178,20 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
             }
         }
     }
-    //kernel_puts("pc_schedule step1\n", 0xfff, 0);
     // Select process to load in CPU
     int i, j;
     for(i = 7; i >= 0; i--) // From high priority to low priority
     {
-       //kernel_printf("i is %d\n", i);
-
         for(j = 0; j < 8; j++)
-        {
+        { 
             curr_proc[i] = (curr_proc[i] + 1) & 7;
-            //kernel_printf("curr_proc[i] is %d\n", curr_proc[i]);
-
-            if(task_queue[i].pcb[curr_proc[i]].ASID > 0){
-                //kernel_printf("name is %s, ASID is %d\n", task_queue[i].pcb[curr_proc[i]].name, task_queue[i].pcb[curr_proc[i]].ASID);
+            if(task_queue[i].pcb[curr_proc[i]].ASID > 0) // Find a process to execute, break
                 break;
-            }
-
         }
-        //kernel_printf("here\n");
-        //kernel_printf("j == %d\n", j);
-        if (j != 8){
-            //
+        if (j != 8) // Find a PCB before j reaches 8
             break;
-        }
     }
-
+    // If does not find a pcb to exec, print error
     if(i < 0){
         kernel_puts("Error: PCB[0] is invalid!\n", 0xfff, 0);
         while (1)
@@ -208,31 +199,25 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
     }
     curr_queue = i;
 
-    /*
-    kernel_printf("To schedule epc is %x\n", task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.epc);
-    kernel_printf("To schedule sp is %x\n", task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.sp);
-    kernel_printf("priority is %d\n", task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority);
-    kernel_printf("To schedule time slice is %x\n", task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice);
-    */
-    //kernel_printf("  %d,  hhh,   %d\n", curr_queue, curr_proc[curr_queue]);
     // Load context
     copy_context(&(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context), pt_context);
     
-    //unsigned int compare_ = 1000000;
-
-
-    /*
-    asm volatile( 
-        "mtc0 %0, $9\n\t" //
-        "mtc0 %1, $11\n\t" // 
-        : "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice), "=r"(time_slice[task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority])); // compare time is set according to static priority
-    */
-    /*
-    asm volatile( 
-        "mtc0 %0, $9\n\t" //
-        : "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice)); // compare time is set according to static priority
-    */
-    asm volatile("mtc0 $zero, $9\n\t");
+      asm volatile( 
+        "mtc0 $zero, $9\n\t"
+        "mtc0 %0, $11\n\t" //
+        "mtc0 %1, $9\n\t" //
+        :: "r"(time_slice[task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority]), "r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice)); // compare time is set according to static priority
+     
+     /*// The annotated asm codes are standard priority process way, due to hardware problem, it cannot be implemented
+     *
+     * asm volatile( 
+     *   "mtc0 %0, $9\n\t" //
+     *   : "=r"(task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice)); // compare time is set according to static priority
+     * 
+     * // A easy version
+     * 
+     * asm volatile("mtc0 $zero, $9\n\t");
+     */
 }
 
 
@@ -289,9 +274,8 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
     task_queue[priority].pcb[curr_pos].ASID = asid;
     
     // 
-    if (task_queue[priority].pcb[curr_pos].ASID > 0 && priority > curr_queue)
+    if (task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID > 0 && priority > curr_queue)
     { //  
-        //kernel_puts("Preempt start\n", 0xfff, 0);
         asm volatile(
             "li $v0, 11\n\t"
             "syscall\n\t"
@@ -388,11 +372,11 @@ task_struct* get_curr_pcb() {
  */
 int print_proc() {
     int i, j;
-    kernel_puts("PID name s_pri d_pri\n", 0xfff, 0);
+    kernel_puts("PID\t\tname\t\tstatP\n", 0xfff, 0);
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++){
             if (task_queue[i].pcb[j].ASID >= 0)
-                kernel_printf(" %x   %s   %d   %d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority, i);
+                kernel_printf(" %x\t\t%s\t\t%d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
         }
     }
     return 0;

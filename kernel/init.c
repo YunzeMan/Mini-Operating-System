@@ -18,11 +18,11 @@
 void machine_info() {
     int row;
     int col;
-    kernel_printf("\n%s\n", "ZJUNIX V1.0");
+    kernel_printf("\n%s\n", "Mini_Operating_System V1.0");
     row = cursor_row;
     col = cursor_col;
     cursor_row = 29;
-    kernel_printf("%s", "Created by System Interest Group, Zhejiang University.");
+    kernel_printf("%s", "Created by OS Group, MAN Yunze, BIAN Song, CHEN jiaao.");
     cursor_row = row;
     cursor_col = col;
     kernel_set_cursor();
@@ -34,9 +34,9 @@ void create_startup_process() {
     kernel_puts("create_startup_process_start\n", 0xfff, 0);
     unsigned int init_gp;
     asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-    pc_create(1, ps, (unsigned int)kmalloc(4096) + 4096, init_gp, "powershell", 4);
+    pc_create(1, ps, (unsigned int)kmalloc(4096) + 4096, init_gp, "Shell", MAX_PRIO);
     log(LOG_OK, "Shell init");
-    pc_create(2, system_time_proc, (unsigned int)kmalloc(4096) + 4096, init_gp, "time", 4);
+    pc_create(2, system_time_proc, (unsigned int)kmalloc(4096) + 4096, init_gp, "time", DEFAULT_PRIO + 1);
     log(LOG_OK, "Timer init");
 }
 #pragma GCC pop_options
