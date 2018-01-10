@@ -27,6 +27,7 @@ typedef struct pidmap{
 
 #define RESERVED_PIDS 10
 
+void init_pid();
 int alloc_pidmap();
 int test_and_set_bit(int offset, void *addr);
 void clear_bit(int offset, void *addr);

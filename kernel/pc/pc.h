@@ -32,8 +32,10 @@ typedef struct {
     char name[32];
     unsigned long start_time;
     unsigned int time_slice;
+
     unsigned int priority;
     unsigned int stack;
+    
 } task_struct;
 
 

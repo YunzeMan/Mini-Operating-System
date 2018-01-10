@@ -477,7 +477,7 @@ int pc_kill(int proc) {
         for(j = 0; j < 16; j++)
         {
             curr_proc[i] = (curr_proc[i] + 1) & 15;
-            if(task_queue[i].pcb[curr_proc[i]].ASID = proc){
+            if(task_queue[i].pcb[curr_proc[i]].ASID == proc){
                 free_pidmap(proc);
                 task_queue[i].pcb[curr_proc[i]].ASID = -1;
                 return 2; // return 2 if correctly killed

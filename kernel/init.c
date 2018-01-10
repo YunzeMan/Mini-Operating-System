@@ -37,9 +37,12 @@ void create_startup_process() {
     asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
     int asid_1, asid_2;
     asid_1 = alloc_pidmap();
+    kernel_printf("  asid1 is %d\n", asid_1);
     pc_create(asid_1, ps, (unsigned int)kmalloc(8192) + 8192, init_gp, "Shell", DEFAULT_PRIO + 2);
     log(LOG_OK, "Shell init");
     asid_2 = alloc_pidmap();
+    kernel_printf("  asid2 is %d\n", asid_2);
+
     pc_create(asid_2, system_time_proc, (unsigned int)kmalloc(8192) + 8192, init_gp, "time", DEFAULT_PRIO + 1);
     log(LOG_OK, "Timer init");
 }
@@ -75,6 +78,7 @@ void init_kernel() {
     log(LOG_END, "System Calls.");
     // Process control
     log(LOG_START, "Process Control Module.");
+    init_pid();
     init_pc();
     create_startup_process();
     log(LOG_END, "Process Control Module.");

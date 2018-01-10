@@ -34,6 +34,14 @@ pid / 8， int a=(pid/8)，将得到的a的值作为pidmap.page的下标，也�
 
 
 */
+void init_pid() 
+{
+    int i;
+    last_pid = -1;
+    pid_map.nr_free = PID_MAX_DEFAULT;
+    for (i = 0; i < PAGE_SIZE; i++)
+        pid_map.page[i] = 0;
+}
 
 //这个函数的作用主要是将offset在pidmap变量当中相应的位置为1，也就是申请到一个pid号之后，修改位标志。其中addr是pidmap.page变量的地址。
 int test_and_set_bit(int offset, void *addr)
