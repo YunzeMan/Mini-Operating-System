@@ -33,5 +33,6 @@ int test_and_set_bit(int offset, void *addr);
 void clear_bit(int offset, void *addr);
 int find_next_zero_bit(void *addr, int size, int offset);
 void free_pidmap(int pid);
+int test_pidmap();
 
 #endif  // !_ZJUNIX_PID_H

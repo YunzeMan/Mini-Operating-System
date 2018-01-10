@@ -514,7 +514,7 @@ int print_proc() {
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 16; j++){
             if (task_queue[i].pcb[j].ASID >= 0)
-                kernel_printf("   %x\t\t%s\t\t%d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
+                kernel_printf("   %d\t\t%s\t\t%d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
         }
     }
     return 0;

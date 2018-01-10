@@ -206,7 +206,6 @@ void *kmalloc(unsigned int size)
         size &= ~((1 << PAGE_SHIFT) - 1);
         // return (void *)(KERNEL_ENTRY | (unsigned int)alloc_pages(size >> PAGE_SHIFT));
         unsigned int addr = (unsigned int)alloc_pages(size >> PAGE_SHIFT);
-        kernel_printf("  test %x\n", addr);
         if (!addr)
         {
             kernel_printf("  ERROR: No available page\n");

@@ -42,7 +42,6 @@ void create_startup_process() {
     log(LOG_OK, "Shell init");
     asid_2 = alloc_pidmap();
     kernel_printf("  asid2 is %d\n", asid_2);
-
     pc_create(asid_2, system_time_proc, (unsigned int)kmalloc(8192) + 8192, init_gp, "time", DEFAULT_PRIO + 1);
     log(LOG_OK, "Timer init");
 }

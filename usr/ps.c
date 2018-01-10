@@ -183,6 +183,9 @@ void parse_cmd() {
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
         int asid = alloc_pidmap();
         pc_create(asid, system_time_proc, (unsigned int)kmalloc(8192)+8192, init_gp, "time", DEFAULT_PRIO);
+    } else if (kernel_strcmp(ps_buffer, "testpid") == 0) {
+        int result = test_pidmap();
+        kernel_printf("  test_pidmap return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "time7") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));

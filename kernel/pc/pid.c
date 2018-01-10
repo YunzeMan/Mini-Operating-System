@@ -4,6 +4,10 @@
 #include <intr.h>
 #include <zjunix/syscall.h>
 #include <zjunix/utils.h>
+#include <zjunix/pc.h>
+#include <zjunix/time.h>
+#include <zjunix/slab.h>
+#include <zjunix/buddy.h>
 
 #define PID_MAX 56
 
@@ -106,4 +110,19 @@ void free_pidmap(int pid)
     int offset = pid & BITS_PER_PAGE_MASK;
     pid_map.nr_free++;
     clear_bit(offset, &pid_map.page);
+}
+
+int test_pidmap()
+{
+    int i, asid;
+    unsigned int init_gp;
+    asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+    for (i = 0; i < 10000; i++)
+    {
+        asid = alloc_pidmap();
+        pc_create(asid, system_time_proc, (unsigned int)kmalloc(512) + 512, init_gp, "testpid", DEFAULT_PRIO + 1);
+        pc_kill(asid);
+    }
+    asid = alloc_pidmap();
+    pc_create(asid, system_time_proc, (unsigned int)kmalloc(512) + 512, init_gp, "testpid", DEFAULT_PRIO + 1);
 }
