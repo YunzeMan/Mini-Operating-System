@@ -241,7 +241,10 @@ void parse_cmd() {
             dest = param + i + 1;
         }
         result = fs_mv(src, dest);
-        kernel_printf("  mv return with %d\n", result);
+
+        kernel_printf("%s\n", src);
+        kernel_printf("%s\n",dest);
+        kernel_printf("mv return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "cp") == 0) {
         /* add cp instruction */
         for(i = 0; i < 63; i++)
@@ -261,7 +264,9 @@ void parse_cmd() {
             dest = param + i + 1;
         }
         result = fs_cp(src, dest);
-        kernel_printf("  cp return with %d\n", result);
+        kernel_printf("%s\n", src);
+        kernel_printf("%s\n",dest);
+        kernel_printf("cp return with %d\n", result);
     } else {
         kernel_printf("  ");
         kernel_puts(ps_buffer, 0xfff, 0);
