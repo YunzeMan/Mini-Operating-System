@@ -48,12 +48,12 @@ int proc_demo_create() {
     }
     unsigned int init_gp;
     asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-    pc_create(asid, test_proc, (unsigned int)kmalloc(4096), init_gp, "test", 4);
+    pc_create(asid, test_proc, (unsigned int)kmalloc(8192), init_gp, "test", 4);
     return 0;
 }
 
 void ps() {
-    kernel_printf("   Press any key to enter shell.\n");
+    kernel_printf("  Press any key to enter shell.\n");
     kernel_getchar();
     char c;
     ps_buffer_index = 0;
@@ -94,7 +94,7 @@ void parse_cmd() {
     char dir[32];
     char c;
     kernel_putchar('\n', 0, 0);
-    char sd_buffer[8192];
+    char sd_buffer[2048];
     int i = 0;
     char *param; /**/
     char *src; /* The source of cp and mv instruction */
@@ -147,6 +147,9 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "ps") == 0) {
         result = print_proc();
         kernel_printf("  ps return with %d\n", result);
+    } else if (kernel_strcmp(ps_buffer, "forktest") == 0) {
+        result = test_fork();
+        kernel_printf("  forktest return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "mmtest1") == 0) {
         void * addr1 = kmalloc(512);
         kernel_printf("  kmalloc : %x, size = 0.5KB\n", addr1);
@@ -177,11 +180,13 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "time") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-        pc_create(20, system_time_proc, (unsigned int)kmalloc(4096)+4096, init_gp, "time", 4);
+        int asid = alloc_pidmap();
+        pc_create(asid, system_time_proc, (unsigned int)kmalloc(8192)+8192, init_gp, "time", DEFAULT_PRIO);
     } else if (kernel_strcmp(ps_buffer, "time7") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-        pc_create(21, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time7", 7); 
+        int asid = alloc_pidmap();
+        pc_create(asid, system_time_proc, (unsigned int)kmalloc(8192) + 8192, init_gp, "time7", MAX_PRIO); 
     } else if (kernel_strcmp(ps_buffer, "proc") == 0) {
         result = proc_demo_create();
         kernel_printf("  proc return with %d\n", result);
@@ -258,6 +263,7 @@ void parse_cmd() {
         result = fs_cp(src, dest);
         kernel_printf("  cp return with %d\n", result);
     } else {
+        kernel_printf("  ");
         kernel_puts(ps_buffer, 0xfff, 0);
         kernel_puts("  : command not found\n", 0xfff, 0);
     }

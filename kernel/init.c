@@ -9,6 +9,7 @@
 #include <zjunix/fs/fat.h>
 #include <zjunix/log.h>
 #include <zjunix/pc.h>
+#include <zjunix/pid.h>
 #include <zjunix/slab.h>
 #include <zjunix/syscall.h>
 #include <zjunix/time.h>
@@ -18,7 +19,7 @@
 void machine_info() {
     int row;
     int col;
-    kernel_printf("  \n%s\n", "Mini_Operating_System V1.0");
+    kernel_printf("\n  %s\n", "Mini_Operating_System V1.0");
     row = cursor_row;
     col = cursor_col;
     cursor_row = 29;
@@ -34,9 +35,12 @@ void create_startup_process() {
     kernel_puts("  create_startup_process_start\n", 0xfff, 0);
     unsigned int init_gp;
     asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-    pc_create(1, ps, (unsigned int)kmalloc(4096) + 4096, init_gp, "Shell", MAX_PRIO);
+    int asid_1, asid_2;
+    asid_1 = alloc_pidmap();
+    pc_create(asid_1, ps, (unsigned int)kmalloc(8192) + 8192, init_gp, "Shell", DEFAULT_PRIO + 2);
     log(LOG_OK, "Shell init");
-    pc_create(2, system_time_proc, (unsigned int)kmalloc(4096) + 4096, init_gp, "time", DEFAULT_PRIO + 1);
+    asid_2 = alloc_pidmap();
+    pc_create(asid_2, system_time_proc, (unsigned int)kmalloc(8192) + 8192, init_gp, "time", DEFAULT_PRIO + 1);
     log(LOG_OK, "Timer init");
 }
 #pragma GCC pop_options

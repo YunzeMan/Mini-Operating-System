@@ -32,17 +32,20 @@ typedef struct {
     char name[32];
     unsigned long start_time;
     unsigned int time_slice;
-    int priority;
+
+    unsigned int priority;
+    unsigned int stack;
+
 } task_struct;
 
 
 typedef struct {
-    task_struct pcb[8];
+    task_struct pcb[16];
 } task_level;
 
 typedef union {
     task_struct task;
-    unsigned char kernel_stack[4096];
+    unsigned char kernel_stack[8192];
 } task_union;
 
 #define PROC_DEFAULT_TIMESLOTS 6
@@ -51,11 +54,15 @@ void init_pc();
 void pc_schedule(unsigned int status, unsigned int cause, context* pt_context);
 int pc_peek(int priority);
 void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init_gp, char* name, int priority);
+void do_fork(unsigned int status, unsigned int cause, context* pt_context);
 void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_context);
 void pc_preempt_syscall(unsigned int status, unsigned int cause, context* pt_context);
 int pc_kill(int proc);
 task_struct* get_curr_pcb();
 int print_proc();
+int test_fork();
+void exit();
+
 
 /*
  * Task state bitmask. Similar to the one in Linux

@@ -76,8 +76,6 @@ int find_next_zero_bit(void *addr, int size, int offset)
 int alloc_pidmap()
 {
     int pid = last_pid + 1;
-    if (pid >= PID_MAX)
-		pid = RESERVED_PIDS;
     int offset = pid & BITS_PER_PAGE_MASK;//把offset的最高为变为0，其他的不变
     
     if (!pid_map.nr_free)
