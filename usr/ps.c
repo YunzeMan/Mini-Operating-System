@@ -5,6 +5,7 @@
 #include <zjunix/bootmm.h>
 #include <zjunix/buddy.h>
 #include <zjunix/fs/fat.h>
+#include <zjunix/pid.h>
 #include <zjunix/slab.h>
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
