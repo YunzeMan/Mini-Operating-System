@@ -76,5 +76,34 @@ void DeleteNode(struct filetree * p)
 
 void print_tree(struct filetree * ft)
 {
-    
+    kernel_printf("%s", ft->name);
+    struct filetree * p;
+    struct filetree * pt;
+    p = ft;
+    while(p->child != NULL) 
+    {
+        pt = p->child;
+        while(pt->next != NULL)
+        {
+            kernel_printf("%s",pt->name);
+        }
+        p = p->child;
+    }
+}
+
+int Empty(struct filetree * ft)
+{
+    if(ft->child == NULL)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void matching(char * param)
+{
+
 }
