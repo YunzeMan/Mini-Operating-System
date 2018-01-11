@@ -149,8 +149,10 @@ void parse_cmd() {
         result = print_proc();
         kernel_printf("  ps return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "forktest") == 0) {
-        result = test_fork();
-        kernel_printf("  forktest return with %d\n", result);
+        unsigned int init_gp;
+        asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+        int asid = alloc_pidmap();
+        pc_create(asid, test_fork, (unsigned int)kmalloc(8192) + 8192, init_gp, "forktest", DEFAULT_PRIO + 2);
     } else if (kernel_strcmp(ps_buffer, "mmtest1") == 0) {
         void * addr1 = kmalloc(512);
         kernel_printf("  kmalloc : %x, size = 0.5KB\n", addr1);

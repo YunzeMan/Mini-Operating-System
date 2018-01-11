@@ -28,6 +28,7 @@ typedef struct {
 typedef struct {
     context context;
     int ASID;
+    int PPID;
     unsigned int counter;
     char name[32];
     unsigned long start_time;
@@ -60,7 +61,7 @@ void pc_preempt_syscall(unsigned int status, unsigned int cause, context* pt_con
 int pc_kill(int proc);
 task_struct* get_curr_pcb();
 int print_proc();
-int test_fork();
+void test_fork();
 void exit();
 
 

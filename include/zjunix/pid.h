@@ -1,10 +1,11 @@
 #ifndef _ZJUNIX_PID_H
 #define _ZJUNIX_PID_H
 
-/* max number of pid, equal to */
+/* Max number of pid, equal to 0x8000*/
 #define PID_MAX_DEFAULT 0x8000
-/* page size = 2^12 = 4K */
+/* Page size is 4K bytes */
 #define PAGE_SHIFT 12
+/* Shift left to get page_size */
 #define PAGE_SIZE (1UL << PAGE_SHIFT)
 #define BITS_PER_BYTE 8
 #define BITS_PER_PAGE (PAGE_SIZE * BITS_PER_BYTE)
