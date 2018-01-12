@@ -15,7 +15,7 @@ u32 fs_rm(u8 *filename) {
 
     if (fs_open(&mk_dir, filename) == 1)
         goto fs_rm_err;
-
+    
     /* Mark 0xE5 */
     mk_dir.entry.data[0] = 0xE5;
 
@@ -59,8 +59,8 @@ u32 fs_mv(u8 *src, u8 *dest) {
         mk_dir_buf[i] = mk_dir.entry.data[i];
 
     /* new path */
-    for (i = 0; i < 11; i++)
-        mk_dir_buf[i] = filename11[i];
+    //for (i = 0; i < 11; i++)
+       // mk_dir_buf[i] = filename11[i];
 
     if (fs_open(&file_create, dest) == 1)
         goto fs_mv_err;
@@ -102,8 +102,8 @@ u32 fs_cp(u8 *src, u8 *dest) {
         mk_dir_buf[i] = mk_dir.entry.data[i];
 
     /* new path */
-    for (i = 0; i < 11; i++)
-        mk_dir_buf[i] = filename11[i];
+    //for (i = 0; i < 11; i++)
+      //  mk_dir_buf[i] = filename11[i];
 
     if (fs_open(&file_create, dest) == 1)
         goto fs_cp_err;
@@ -116,7 +116,7 @@ u32 fs_cp(u8 *src, u8 *dest) {
         goto fs_cp_err;
 
     /* mark src directory entry 0xE5 */
-    mk_dir.entry.data[0] = 0xE5;
+    //mk_dir.entry.data[0] = 0xE5;
 
     if (fs_close(&mk_dir) == 1)
         goto fs_cp_err;

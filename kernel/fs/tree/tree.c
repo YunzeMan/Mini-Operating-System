@@ -3,18 +3,40 @@
 #include <driver/vga.h>
 #include <zjunix/utils.h>
 
-void init_treenode(struct filetree * p, char * name)
+
+void init_filetree()
 {
-    int i = 0;
-    p = (struct filetree *)kmalloc(sizeof(struct filetree));
+    int i;
+    root = (struct filetree *)kmalloc(sizeof(struct filetree));
+    root->child = NULL;
+    root->parent = NULL;
+    for(i = 0; i < 256; i++)
+    {
+        root->name[i] = 0;
+    }
+    root->name[0] = '/';
+    root->next = NULL;
+    root->before = NULL;
+}
+
+struct filetree * init_treenode(char * name)
+{
+    int i;
+    struct filetree * p = (struct filetree *)kmalloc(sizeof(struct filetree));
     p->child = NULL;
     p->parent = NULL;
+    p->next = NULL;
+    p->before = NULL;
+    for(i = 0; i < 256; i++)
+    {
+        p->name[i] = 0;
+    }
+    i = 0;
     do {
         p->name[i] = name[i];
         i++;
     } while(name[i] != '\0' && i < 256);
-    p->next = NULL;
-    p->before = NULL;
+    return p;
 }
 
 void outputDir(struct filetree * tParent)
@@ -43,13 +65,39 @@ void becomeChild(struct filetree * tParent, struct filetree * tChild)
     }
 }
 
-void FindTree(struct filetree * tParent, char * param)
+struct filetree * findNode (char * param)
 {
-    
+    struct filetree * p;
+    struct filetree * c;
+    p = root;
+    while(p != NULL)
+    {
+        c = p;
+        if(matching(c,param))
+        {
+            return c;
+        }
+        else
+        {
+            while(c->next != NULL)
+            {
+                c = c->next;
+                if(matching(c,param))
+                {
+                    return c;
+                }
+            }
+            p = p->child;
+        }
+    }
+    return NULL;
 }
 
-void DeleteNode(struct filetree * p)
+void deleteNode(char * param)
 {
+    struct filetree * p;
+    struct filetree * t;
+    p = findNode(param);
     if(p->parent->child == p)
     {
         p->parent->child = p->next;
@@ -58,7 +106,7 @@ void DeleteNode(struct filetree * p)
     }
     else
     {
-        struct filetree * t = p->parent->child;
+        t = p->parent->child;
         while(t && t->next!=p)
         {
             t = t->next;
@@ -76,18 +124,19 @@ void DeleteNode(struct filetree * p)
 
 void print_tree(struct filetree * ft)
 {
-    kernel_printf("%s", ft->name);
     struct filetree * p;
-    struct filetree * pt;
+    struct filetree * c;
     p = ft;
-    while(p->child != NULL) 
+    while(p != NULL)
     {
-        pt = p->child;
-        while(pt->next != NULL)
+        c = p;
+        kernel_printf("    %s\n", c->name);
+        while(c->next != NULL)
         {
-            kernel_printf("%s",pt->name);
+            c = c->next;
+            kernel_printf("    %s\n", c->name);
         }
-        p = p->child;
+        p=p->child;
     }
 }
 
@@ -103,7 +152,29 @@ int Empty(struct filetree * ft)
     }
 }
 
-void matching(char * param)
+int matching(struct filetree * p, char * param)
 {
-
+    int i;
+    //len = strlen(p->name);
+    unsigned int len = 0;
+    while (p->name[len])
+        ++len;
+    for(i=0; i<len; i++)
+    {
+        if(p->name[i] == param[i])
+        {
+        }
+        else
+        {
+            break;
+        }
+    }
+    if(i<len)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }

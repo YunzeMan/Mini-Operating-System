@@ -48,13 +48,12 @@ struct vfs {
     u32 count;                    /* reference count */
     u32 uid;                      /* user id */
     u32 gid;                      /* group id */
-    struct fat32 * fat32_file;    /* fat32 file system */
-    struct ext2 * ext2_file;      /* ext2 file system */
+    struct fat32 * fat32_file;    /* fat32 file operation */
+    struct ext2 * ext2_file;      /* ext2 file operation */
 };
 
 struct vfs* vfsfile;
 
 void initial_vfs();
-
 
 #endif // !_ZJUNIX_FS_VFS_H

@@ -1,177 +1,182 @@
 #ifndef _ZJUNIX_FS_MYEXT2_H
 #define _ZJUNIX_FS_MYEXT2_H
 
+#include <zjunix/fs/ext2vfs.h>
 #include <zjunix/fs/buffer_head.h>
 #include <zjunix/type.h>
 
-#define EXT2_N_BLOCKS 15
+#define SIZE_SB 1024
 
-/* group descriptor */
-struct myext2_group_desc {
-	u32	bg_block_bitmap;		/* Blocks bitmap block */
-	u32	bg_inode_bitmap;		/* Inodes bitmap block */
-	u32	bg_inode_table;		    /* Inodes table block */
-	u16	bg_free_blocks_count;	/* Free blocks count */
-	u16	bg_free_inodes_count;	/* Free inodes count */
-	u16	bg_used_dirs_count;	    /* Directories count */
-	u16	bg_pad;
-	u32	bg_reserved[3];
+struct superblock_ext2{
+    unsigned int s_inodes_count;  // total inode count
+    unsigned int s_free_inodes_count; //free inode count
+    unsigned int s_blocks_count;  //total data block count
+    unsigned int s_free_blocks_count; //free data block count
+
+    unsigned int s_first_data_block;  // first data block
+    unsigned int s_log_block_size; //block size 
+    unsigned int s_log_frag_size; //fragment size
+
+    unsigned int s_blocks_per_group; //blocks per group
+    unsigned int s_frags_per_group; //fragments per group
+    unsigned int s_inodes_per_group;  //inodes per group
+    
+    unsigned int s_mtime;  // mount time
+    unsigned int s_wtime;  // write time
+    unsigned short s_mnt_count;  // mount count
+    unsigned short s_max_mnt_count; //max mount count
+	unsigned short s_magic;
 };
 
-/* inode */
-struct myext2_inode {
-	u16	i_mode;		    /* File mode */
-	u16	i_uid;		    /* Low 16 bits of Owner Uid */
-	u32	i_size;		    /* Size in bytes */
-	u32	i_atime;	    /* Access time */
-	u32	i_ctime;	    /* Creation time */
-	u32	i_mtime;	    /* Modification time */
-	u32	i_dtime;	    /* Deletion Time */
-	u16	i_gid;		    /* Low 16 bits of Group Id */
-	u16	i_links_count;	/* Links count */
-	u32	i_blocks;	    /* Blocks count */
-	u32	i_flags;	    /* File flags */
-	u32	i_block[EXT2_N_BLOCKS];/* Pointers to blocks */
-	u32	i_generation;	/* File version (for NFS) */
-	u32	i_file_acl;	    /* File ACL */
-	u32	i_dir_acl;	    /* Directory ACL */
-	u32	i_faddr;	    /* Fragment address */
+struct bg_desc_ext2{
+    unsigned int bg_block_bitmap;  //block bitmap
+    unsigned int bg_inode_bitmap;  // inode bitmap
+    unsigned int bg_inode_table;  // inode table block
+
+    unsigned short bg_free_block_count;  // free blocks count
+    unsigned short bg_free_inodes_count;  // free inodes count
+    unsigned short bg_used_dirs_count;  // directories count
+
 };
 
-/* superblock */
-struct myext2_super_block {
-	u32	s_inodes_count;		    /* Inodes count */
-	u32	s_blocks_count;		    /* Blocks count */
-	u32	s_r_blocks_count;	    /* Reserved blocks count */
-	u32	s_free_blocks_count;	/* Free blocks count */
-	u32	s_free_inodes_count;	/* Free inodes count */
-	u32	s_first_data_block;	    /* First Data Block */
-	u32	s_log_block_size;	    /* Block size */
-	u32	s_log_frag_size;	    /* Fragment size */
-    u32	s_blocks_per_group;	    /* # Blocks per group */
-	u32	s_frags_per_group;	    /* # Fragments per group */
-	u32	s_inodes_per_group;	    /* # Inodes per group */
-	u32	s_mtime;		        /* Mount time */
-	u32	s_wtime;		        /* Write time */
-	u16	s_mnt_count;		    /* Mount count */
-	u16	s_max_mnt_count;	    /* Maximal mount count */
-	u16	s_magic;		        /* Magic signature */
-	u16	s_state;		        /* File system state */
-	u32	s_first_ino; 		    /* First non-reserved inode */
-	u16 s_inode_size; 		    /* size of inode structure */
-	u16	s_block_group_nr; 	    /* block group # of this superblock */
-	u32	s_feature_compat; 	    /* compatible feature set */
-	u32	s_feature_incompat; 	/* incompatible feature set */
-	u32	s_feature_ro_compat; 	/* readonly-compatible feature set */
-	u8	s_uuid[16];		        /* 128-bit uuid for volume */
-	char s_volume_name[16]; 	/* volume name */
-	char s_last_mounted[64]; /* directory where last mounted */
-	u32	s_reserved[190];	    /* Padding to the end of the block */
+
+struct inode_ext2{
+    unsigned short i_mode;  // file mode
+    unsigned int i_size;   // file size
+    unsigned int i_atime;   // file last read time
+    unsigned int i_ctime;  // file create time
+    unsigned int i_mtime;  // file last modify time
+    unsigned int i_dtime;  // file delete time
+
+    unsigned short i_links_count;  // count of links to blocks 
+    unsigned int i_blocks;
+    unsigned int i_flags;   //file flag
+    unsigned int i_block[15];  // pointers to data block
+
+    unsigned int i_file_acl;
+    unsigned int i_dir_acl;
+
 };
 
-/* directory */
-struct myext2_dir_entry_2 {
-	u32	inode;			/* Inode number */
-	u16	rec_len;		/* Directory entry length */
-	u8	name_len;		/* Name length */
-	u8	file_type;
-	u8  name[16];	    /* File name */
+struct dir_entry_ext2{
+    unsigned int inode;
+    unsigned short rec_len;
+    unsigned char name_len;
+    unsigned char file_type;
 };
 
-/* Ext2 directory file types. */
-enum {
-	MYEXT2_FT_UNKNOWN,   /* unknown */
-	MYEXT2_FT_REG_FILE,  /* normal file */
-	MYEXT2_FT_DIR,       /* directory file */
-	MYEXT2_FT_CHRDEV,    /* char dev file */
-	MYEXT2_FT_BLKDEV,    /* block dev file */
-	MYEXT2_FT_FIFO,      /* named pipe file */
-	MYEXT2_FT_SOCK,      /* socket file */
-	MYEXT2_FT_SYMLINK,   /* link file */
-	MYEXT2_FT_MAX        /* The max number of file type */
+//struct file_ext2 ;
+
+struct blk_iterator
+{
+	int mode;
+	unsigned int index[4];
+	char* blks[4];
+	int blk_valid[4];
+	unsigned int blks_blk[4];
+
+	struct file_ext2* file;
+	struct inode_ext2* pinode;
+	unsigned int inode_pos;
+
+	int code;
+	struct file *dev_file;
+	unsigned int offset;
+
 };
 
-/* The information of ext2 superblock in memory */
-struct myext2_sb_info {
-    u32 s_frag_size;	      /* Size of a fragment in bytes */
-	u32 s_frags_per_block;    /* Number of fragments per block */
-	u32 s_inodes_per_block;   /* Number of inodes per block */
-	u32 s_frags_per_group;    /* Number of fragments in a group */
-	u32 s_blocks_per_group;   /* Number of blocks in a group */
-	u32 s_inodes_per_group;   /* Number of inodes in a group */
-	u32 s_itb_per_group;	  /* Number of inode table blocks per group */
-	u32 s_gdb_count;	      /* Number of group descriptor blocks */
-	u32 s_desc_per_block;	  /* Number of group descriptors per block */
-	u32 s_groups_count;	      /* Number of groups in the fs */
-	struct buffer_head * s_sbh;	          /* Buffer containing the super block */
-	struct myext2_super_block * s_es;	  /* Pointer to the super block in the buffer */
-	struct buffer_head ** s_group_desc;
-	u32 s_addr_per_block_bits;
-	u32 s_desc_per_block_bits;
-	u32 s_inode_size;
-	u32 s_first_ino;
-	u32 s_dir_count;
+// TODO: file FROM VFS
+struct file_ext2{
+    struct file* dev_file;
+    struct superblock_ext2* sb;
+    struct inode_ext2* pinode;
+    
+    unsigned int inode_index;
+    unsigned int offset_inode;
+
+    struct bg_desc_ext2* pbgd;
+    unsigned int pbgd_index;
+
+    struct blk_iterator* it_lpos;
+    struct blk_iterator* it_end; 
 };
 
-/* The information of ext2 inode in memory */
-struct myext2_inode_info {
-    u32	i_data[15];
-	u32	i_flags;
-	u32	i_faddr;
-	u8	i_frag_no;
-	u8	i_frag_size;
-	u16	i_state;
-	u32	i_file_acl;
-	u32	i_dir_acl;
-	u32	i_dtime;
-	u32	i_block_group;
-	u32	i_next_alloc_block;
-	u32	i_next_alloc_goal;
-	u32	i_prealloc_block;
-	u32	i_prealloc_count;
-	u32	i_dir_start_lookup;
-	//struct inode vfs_inode;
-};
+extern struct superblock_ext2* gsb_ext2;
 
-u32 init_myext2();
-u32 myext2_find();
-u32 myext2_open();
-u32 myext2_close();
-u32 myext2_read();
-u32 myext2_write();
-u32 myext2_fflush();
-void myext2_lseek();
+extern unsigned g_blocks_per_group_ext2;
 
-/*u32 init_myext2();
-u32 myext2_find();
-u32 myext2_open(FILE *file, unsigned char *filename);
-u32 myext2_close(FILE *file);
-u32 myext2_read(FILE *file, unsigned char *buf, unsigned long count);
-u32 myext2_write(FILE *file, const unsigned char *buf, unsigned long count);
-u32 myext2_fflush();
-void myext2_lseek(FILE *file, unsigned long new_loc);*/
+extern struct bg_desc_ext2* gbgd_ext2;
 
-/* balloc.c */
-//extern int myext2_new_block (struct inode *, unsigned long, __u32 *, __u32 *, int *);
-//extern void myext2_free_blocks (struct inode *, unsigned long, unsigned long);
-//extern u32 myext2_count_free_blocks (struct super_block *);
-//extern u32 myext2_count_dirs (struct super_block *);
-extern struct myext2_group_desc * myext2_get_group_desc(struct myext2_sb_info * sb, unsigned int block_group, struct buffer_head ** bh);
+int init_superblock_ext2(struct file* dev_file);
 
-/* dir.c */
-//extern int myext2_make_empty(struct inode *, struct inode *);
-//extern int myext2_empty_dir (struct inode *);
+int init_ext2_system(struct file* dev_file);
 
-/* inode.c */
-//extern void myext2_read_inode (struct inode *);
-//extern int myext2_write_inode (struct inode *, int);
-//extern void myext2_put_inode (struct inode *);
-//extern void myext2_delete_inode (struct inode *);
-//extern int myext2_sync_inode (struct inode *);
-//extern void myext2_discard_prealloc (struct inode *);
-//extern int myext2_get_block(struct inode *, sector_t, struct buffer_head *, int);
-//extern void myext2_truncate (struct inode *);
+int print_sb_ext2(struct superblock_ext2* sb);
+int print_bgdesc_ext2(struct bg_desc_ext2* pbgdesc);
+int print_inode_ext2(struct inode_ext2* pinode);
 
-/* file.c */
+int read_inode_ext2(struct file_ext2* file, u32 inode_index);
+int read_bgdesc_ext2(struct file* dev_file, struct bg_desc_ext2* pbgd, u32 bg_index);
 
-#endif //! _ZJUNIX_FS_MYEXT2_H
+int write_inode_ext2(struct file_ext2* filp);
+
+inline u32 get_first_data_block_pos_in_block_group_bitmap(u32 bgd_index,
+		struct superblock_ext2* sb, struct bg_desc_ext2* pbgd);
+
+inline u32 get_last_data_block_pos_in_block_group_bitmap(u32 bgd_index,
+		struct superblock_ext2 *sb, struct bg_desc_ext2 *pbgd);
+inline u32 get_first_data_block_in_block_group(struct bg_desc_ext2* pbgd, struct superblock_ext2* sb);
+
+int readdir_ext2(struct file_ext2* file, struct dir_entry_ext2* dir_entry,
+		char* namebuf, u32 *dir_offset);
+int read_file_ext2(struct file_ext2* file, char* buf, u32 counta, u32 offseta);
+int write_file_ext2(struct file_ext2* file, char* buf, u32 counta, u32 offseta);
+
+int parse_path_ext2(struct file_ext2* file_pwd, u32 mode, char* path,
+		struct file_ext2 *file, char* last_fname);
+
+int get_indirect_blocks(u32 offset, u32* index_arr, u32 *mode);
+int test_get_indirect_blocks();
+
+int create_file_ext2(struct file_ext2* filp_parent_dir,
+		struct file_ext2 *filp_new_file, char* fname, u16 imode, u32 iflags);
+
+int create_directory_ext2(struct file_ext2* filp_parent_dir,
+		struct file_ext2 *filp_new_dir, char* fname, u16 imode, u32 iflags);
+
+int delete_directory_ext2(struct file_ext2* filp_dir, char* fname);
+
+int unlink_file_ext2(struct file_ext2* filp_dir, char* fname);
+
+int display_directory_ext2(struct file_ext2 *file);
+int display_regular_file_ext2(struct file_ext2 *file);
+int display_inode_ext2(struct file_ext2 *file);
+
+int read_from_dev(struct file* dev_file, char* buf, u32 count, u32 offset);
+int write_to_dev(struct file* dev_file, char* buf, u32 count, u32 offset);
+
+int blk_iterator_init(struct blk_iterator *it, struct file_ext2* file,
+		u32 offset);
+int blk_iterator_destroy(struct blk_iterator* it);
+
+int blk_iterator_next(struct blk_iterator *it, u32 offset_new);
+
+u32 blk_iterator_get_blk_index(struct blk_iterator *it);
+
+struct inode_ext2* alloc_inode_ext2();
+struct bg_desc_ext2* alloc_bg_desc_ext2();
+struct blk_iterator* alloc_blk_iterator();
+struct superblock_ext2* alloc_superblock_ext2();
+struct file_ext2* alloc_file_ext2();
+
+int copy_file_ext2(struct file_ext2* fdest, struct file_ext2* fsrc);
+int destroy_file_ext2(struct file_ext2* fdestr);
+
+void init_file_ext2(struct file_ext2* filp, struct file* dev_file, struct superblock_ext2* sb);
+
+
+// randomized testing ext2 file writes
+
+int test_ext2_write(struct file* dev_file, struct superblock_ext2* sb, int no_runs);
+
+#endif

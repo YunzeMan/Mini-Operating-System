@@ -6,6 +6,8 @@ extern struct vfs* vfsfile;
 void initial_vfs() {
     /* apply space */
     vfsfile = (struct vfs*)kmalloc(sizeof(struct vfs));
+    vfsfile->fat32_file = (struct fat32*)kmalloc(sizeof(struct fat32));
+    vfsfile->ext2_file = (struct ext2*)kmalloc(sizeof(struct ext2));
     /* Binding fs_find function */
     vfsfile->fat32_file->find = &fs_find;
     /* Binding init_fs function */
@@ -26,7 +28,7 @@ void initial_vfs() {
     vfsfile->fat32_file->mkdir = &fs_mkdir;
     /* Binding fs_rmdir function */
     vfsfile->fat32_file->rmdir = &fs_rmdir;
-    /* Binding fs_rm function */
+    //* Binding fs_rm function */
     vfsfile->fat32_file->rm = &fs_rm;
     /* Binding fs_mv function */
     vfsfile->fat32_file->mv = &fs_mv;

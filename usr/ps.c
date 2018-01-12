@@ -10,13 +10,15 @@
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
 #include <zjunix/fs/vfs.h>
+#include <zjunix/fs/tree.h>
+#include "cd.h"
 #include "../usr/ls.h"
 #include "exec.h"
 #include "myvi.h"
 
 char ps_buffer[64];
 int ps_buffer_index;
-extern struct vfs* vfsfile;
+char pwd[256];
 
 void test_syscall4() {
     asm volatile(
@@ -57,6 +59,12 @@ void ps() {
     kernel_printf("  Press any key to enter shell.\n");
     kernel_getchar();
     char c;
+    int i;
+    for(i = 0; i < 256; i++)
+    {
+        pwd[i] = 0;
+    }
+    pwd[0] = '/';
     ps_buffer_index = 0;
     ps_buffer[0] = 0;
     kernel_clear_screen(31);
@@ -97,9 +105,13 @@ void parse_cmd() {
     kernel_putchar('\n', 0, 0);
     char sd_buffer[2048];
     int i = 0;
-    char *param; /**/
+    int j;
+    int len; /* The length of string */
+    char *param; /* The parameter of instruction */
     char *src; /* The source of cp and mv instruction */
     char *dest; /* The destination of cp and mv instruction */
+    char *parent;
+    struct filetree * fd;
     /* participle ps_buffer to get param and cmd */
     for (i = 0; i < 63; i++) {
         if (ps_buffer[i] == ' ') {
@@ -206,7 +218,8 @@ void parse_cmd() {
         result = proc_demo_create();
         kernel_printf("  proc return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "cat") == 0) {
-        result = fs_cat(param);
+        result = vfsfile->fat32_file->cat(param);
+        //result = fs_cat(param);
         kernel_printf("  cat return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "ls") == 0) {
         result = ls(param);
@@ -218,17 +231,53 @@ void parse_cmd() {
         result = exec(param);
         kernel_printf("  exec return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "rm") == 0) {
-        result = fs_rm(param);
+        result = vfsfile->fat32_file->rm(param);
+        //result = fs_rm(param);
+        //deleteNode(param);
         kernel_printf("  rm return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "mkdir") == 0) {
-        result = fs_mkdir(param);
+        result = vfsfile->fat32_file->mkdir(param);
+        // add in tree
+        /*struct filetree * p;
+        len = strlen(param);
+        init_treenode(p,param);
+        for(i = len - 1; i >=0; i--)
+        {
+            if(param[i] == '/')
+            {
+                param[i] = 0;
+                break;
+            }
+        }
+        parent = param;
+        fd = findNode(parent);
+        becomeChild(fd,p);*/
+        //result = fs_mkdir(param);
         kernel_printf("  mkdir return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "rmdir") == 0) {
         /* add rmdir instruction */
-        result = fs_rmdir(param);
+        result = vfsfile->fat32_file->rmdir(param);
+        //deleteNode(param);
+        //result = fs_rmdir(param);
         kernel_printf("  rmdir return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "touch") == 0) {
-        result = fs_create(param);
+        result = vfsfile->fat32_file->create(param);
+        // add in tree
+        /*struct filetree * p;
+        len = strlen(param);
+        init_treenode(p,param);
+        for(i = len - 1; i >=0; i--)
+        {
+            if(param[i] == '/')
+            {
+                param[i] = 0;
+                break;
+            }
+        }
+        parent = param;
+        fd = findNode(parent);
+        becomeChild(fd,p);*/
+        //result = fs_create(param);
         kernel_printf("  touch return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "ls_l") == 0) {
         result = ls_l(param);
@@ -236,14 +285,20 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "ls_help") == 0) {
         result = ls_help();
         kernel_printf("  ls_a return with %d\n", result);
-    }
-    else if (kernel_strcmp(ps_buffer, "mv") == 0) {
+    } else if (kernel_strcmp(ps_buffer, "pwd") == 0) {
+        kernel_printf("  %s\n",pwd);
+    } else if (kernel_strcmp(ps_buffer, "tree") == 0) {
+        print_tree(root);
+    } else if (kernel_strcmp(ps_buffer, "cd") == 0) {
+        do_cd(param, pwd);
+    } else if (kernel_strcmp(ps_buffer, "mv") == 0) {
         /* add mv instruction */
         for (i = 0; i < 63; i++)
         {
             if(param[i] == ' ')
             {
                 param[i] = 0;
+                break;
             }
         }
         if (i == 63)
@@ -255,11 +310,10 @@ void parse_cmd() {
             src = param;
             dest = param + i + 1;
         }
+        //kernel_printf("%s\n", src);
+        //kernel_printf("%s\n",dest);
         result = fs_mv(src, dest);
-
-        kernel_printf("%s\n", src);
-        kernel_printf("%s\n",dest);
-        kernel_printf("mv return with %d\n", result);
+        kernel_printf("  mv return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "cp") == 0) {
         /* add cp instruction */
         for(i = 0; i < 63; i++)
@@ -267,6 +321,7 @@ void parse_cmd() {
             if(param[i] == ' ')
             {
                 param[i] = 0;
+                break;
             }
         }
         if (i == 63)
@@ -281,7 +336,7 @@ void parse_cmd() {
         result = fs_cp(src, dest);
         kernel_printf("%s\n", src);
         kernel_printf("%s\n",dest);
-        kernel_printf("cp return with %d\n", result);
+        kernel_printf("  cp return with %d\n", result);
     } else {
         kernel_printf("  ");
         kernel_puts(ps_buffer, 0xfff, 0);
