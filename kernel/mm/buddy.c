@@ -109,6 +109,7 @@ void __free_pages(struct page *page, unsigned int bplevel)
 * page  : the first page object of blocks need to be free
 * bplevel : the level of blocks
 */
+
     unsigned int page_id, buddy_id;
     unsigned int combined_id;
     struct page *buddy_page;
@@ -130,6 +131,10 @@ void __free_pages(struct page *page, unsigned int bplevel)
         {
             break;
         }
+
+        if(buddy_page->flag == 1)
+            break;
+        
         // is find the buddy page, move them from init level, and merge to a higher level at last
         list_del_init(&buddy_page->list);
         // since move out, then count --
@@ -139,6 +144,7 @@ void __free_pages(struct page *page, unsigned int bplevel)
         page += (combined_id - page_id);
         page_id = combined_id;
         bplevel++;
+        
     }
     // merge to a higher level
     set_bplevel(page, bplevel);
@@ -214,11 +220,14 @@ void free_pages(void *addr, unsigned int bplevel)
 * function to free a page from addr
 */
     // if the input address matches the bplevel then free the page
-    //kernel_printf("  .....not here\n");
+    addr =(void *)( (unsigned int)addr & (0x7fffffff));
+   // kernel_printf(" %x  %x\n",addr, bplevel);
+   // kernel_printf("  %x,  %x\n",(pages + ((unsigned int)addr >> PAGE_SHIFT))->flag, (pages + ((unsigned int)addr >> PAGE_SHIFT))->bplevel);
     if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->flag == 1)
     {
         if ((pages + ((unsigned int)addr >> PAGE_SHIFT))->bplevel == bplevel)
         {
+           // kernel_printf("    free pages\n");
             __free_pages(pages + ((unsigned int)addr >> PAGE_SHIFT), bplevel);
         }
     }

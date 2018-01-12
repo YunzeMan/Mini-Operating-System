@@ -42,6 +42,8 @@ struct kmem_cache {
     unsigned char name[16];  
 };
 
+extern int flag;
+
 void init_slab();
 
 void init_each_slab(struct kmem_cache *cache, unsigned int size);
@@ -59,5 +61,7 @@ void *slab_alloc(struct kmem_cache *cache);
 void *kmalloc(unsigned int size);
 
 void kfree(void *obj);
+
+void changeflag(int flag_);
 
 #endif

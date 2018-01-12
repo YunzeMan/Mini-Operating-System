@@ -327,15 +327,17 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
         while (1)
             ;
     }
+    
+    task_queue[priority].pcb[curr_pos].ASID = alloc_pidmap();
+    pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
     copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));  // Save old state
+
 
     copy_context(pt_context, &(task_queue[priority].pcb[curr_pos].context)); // Copy to new 
     task_queue[priority].pcb[curr_pos].priority = priority; // Static priority
     task_queue[priority].pcb[curr_pos].time_slice = 0;
     kernel_strcpy(task_queue[priority].pcb[curr_pos].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
-    task_queue[priority].pcb[curr_pos].ASID = alloc_pidmap();
     task_queue[priority].pcb[curr_pos].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
-    pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
     task_queue[priority].pcb[curr_pos].context.v1 = 0;
 
     unsigned int offset = pt_context->sp - task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
@@ -347,7 +349,7 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
     //kernel_printf("Parent's ra is %x\n", pt_context->ra);
     //kernel_printf("Child's ra is %x\n", task_queue[priority].pcb[curr_pos].context.ra);
 
-    
+    curr_proc[curr_queue] = curr_pos;
     copy_context(&(task_queue[priority].pcb[curr_pos].context), pt_context);
 
     //print_proc();
@@ -399,7 +401,7 @@ int fork() {
  *@No return value
  */
 void test_fork() {
-    unsigned int pid = fork();
+    int pid = fork();
 
     if (pid < 0) {
         kernel_printf("  fork failed!\n");
@@ -451,16 +453,13 @@ void exit(){
 void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_context) {
     free_pidmap(task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID);
     int asid = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
-    int i, j;
-    /*
-    
-    */
+    int i, j, pos;
 
     if (kill_state)
     { // Give the child processes to init process
         for(i = 7; i >= 0; i--) // From high priority to low priority
         {
-            int pos = curr_proc[i];
+            pos = curr_proc[i];
             for(j = 0; j < 16; j++)
             { 
                 pos = (pos + 1) & 15;
@@ -470,7 +469,16 @@ void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_contex
         }
     }
     else{ // Recursive kill
-        
+        for(i = 7; i >= 0; i--) // From high priority to low priority
+        {
+            pos = curr_proc[i];
+            for(j = 0; j < 16; j++)
+            { 
+                pos = (pos + 1) & 15;
+                if(task_queue[i].pcb[pos].PPID == asid) // Find child processes
+                    pc_kill(task_queue[i].pcb[pos].ASID);
+            }
+        }        
     }
     task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID = -1;
 
@@ -496,27 +504,70 @@ int pc_kill(int proc) {
         return 1;
     }
 
-    int i, j;
-    // traverse from high priority to low priority 
-    for(i = 7; i >= 0; i--) 
-    {
-        for(j = 0; j < 16; j++)
+    int i, j, pos, flag = 0;
+
+    if (kill_state)
+    { // Give the child processes to init process
+        for(i = 7; i >= 0; i--) 
         {
-            curr_proc[i] = (curr_proc[i] + 1) & 15;
-            if(task_queue[i].pcb[curr_proc[i]].ASID == proc){
-                free_pidmap(proc);
-                task_queue[i].pcb[curr_proc[i]].ASID = -1;
-                return 2; // return 2 if correctly killed
-            }    
+            pos = curr_proc[i];        
+            for(j = 0; j < 16; j++)
+            {
+                pos = (pos + 1) & 15;
+                if(task_queue[i].pcb[pos].ASID == proc){
+                    free_pidmap(proc);
+                    task_queue[i].pcb[pos].ASID = -1;
+                    flag = 1;
+                } 
+                else if(task_queue[i].pcb[pos].PPID == proc) {
+                    task_queue[i].pcb[pos].PPID = 0;
+                }
+            }
+
+        }
+        if(flag == 0)
+        { // Print error info, return 3
+            kernel_puts("  Error: No process with input ID is found!\n", 0xfff, 0);
+            return 3;
         }
     }
-    if(i < 0)
-    { // Print error info, return 3
-        kernel_puts("  Error: No process with input ID is found!\n", 0xfff, 0);
-        return 3;
+    else{ // Recursive kill
+        for(i = 7; i >= 0; i--) 
+        {
+            pos = curr_proc[i];        
+            for(j = 0; j < 16; j++)
+            {
+                pos = (pos + 1) & 15;
+                if(task_queue[i].pcb[pos].ASID == proc){
+                    free_pidmap(proc);
+                    task_queue[i].pcb[pos].ASID = -1;
+                    flag = 1;
+                } 
+                else if(task_queue[i].pcb[pos].ASID > 0 && task_queue[i].pcb[pos].PPID == proc) {
+                    pc_kill(task_queue[i].pcb[pos].ASID);
+                }
+            }
+        }
+        if(flag == 0)
+        { // Print error info, return 3
+            kernel_puts("  Error: No process with input ID is found!\n", 0xfff, 0);
+            return 3;
+        }
     }
-    return -1; // If return -1, something bad happens
+
+    // traverse from high priority to low priority 
+    return 2; // return 2 if correctly killed
 }
+
+void alt_kill_mode()
+{
+    if (kill_state == 1)
+        kill_state = 0;
+    else
+        kill_state = 1;
+}
+
+
 
 /* Fetch the PCB of the running process  
  * 
@@ -536,11 +587,11 @@ task_struct* get_curr_pcb() {
  */
 int print_proc() {
     int i, j;
-    kernel_puts("  PPID\t\tPID\t\tname\t\tstatP\n", 0xfff, 0);
+    kernel_puts("  PPID\t\tPID\t\tstatP\t\tname\n", 0xfff, 0);
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 16; j++){
             if (task_queue[i].pcb[j].ASID >= 0)
-                kernel_printf("   %d\t\t%d\t\t%s\t\t%d\n", task_queue[i].pcb[j].PPID, task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
+                kernel_printf("   %d\t\t%d\t\t%d\t\t%s\n", task_queue[i].pcb[j].PPID, task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].priority, task_queue[i].pcb[j].name);
         }
     }
     return 0;

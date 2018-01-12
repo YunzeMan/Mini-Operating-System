@@ -176,6 +176,9 @@ void parse_cmd() {
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
         int asid = alloc_pidmap();
         pc_create(asid, test_pidmap, (unsigned int)kmalloc(8192) + 8192, init_gp, "pidtest", DEFAULT_PRIO + 2);
+    } else if (kernel_strcmp(ps_buffer, "killmode") == 0) {
+        alt_kill_mode();
+        kernel_printf("  Kill mode has changed!\n");
     } else if (kernel_strcmp(ps_buffer, "mmtest1") == 0) {
         void * addr1 = kmalloc(512);
         kernel_printf("  kmalloc : %x, size = 0.5KB\n", addr1);
