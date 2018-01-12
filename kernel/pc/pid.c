@@ -107,7 +107,7 @@ void free_pidmap(int pid)
 void test_pidmap()
 {
     int i, pid;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 1000; i++)
     {
         pid = fork();
         if (pid < 0) {

@@ -64,6 +64,7 @@ task_struct* get_curr_pcb();
 int print_proc();
 void test_fork();
 void exit();
+void alt_kill_mode();
 
 
 /*
