@@ -58,10 +58,6 @@ u32 fs_mv(u8 *src, u8 *dest) {
     for (i = 0; i < 32; i++)
         mk_dir_buf[i] = mk_dir.entry.data[i];
 
-    /* new path */
-    //for (i = 0; i < 11; i++)
-       // mk_dir_buf[i] = filename11[i];
-
     if (fs_open(&file_create, dest) == 1)
         goto fs_mv_err;
 
@@ -100,10 +96,6 @@ u32 fs_cp(u8 *src, u8 *dest) {
     /* copy directory entry */
     for (i = 0; i < 32; i++)
         mk_dir_buf[i] = mk_dir.entry.data[i];
-
-    /* new path */
-    //for (i = 0; i < 11; i++)
-      //  mk_dir_buf[i] = filename11[i];
 
     if (fs_open(&file_create, dest) == 1)
         goto fs_cp_err;
@@ -159,7 +151,6 @@ u32 fs_rmdir(u8 *filename) {
     return 0;
 fs_rmdir_err:
     return 1;
-
 }
 
 /* mkdir, create a new file and write . and .. */
@@ -222,16 +213,14 @@ fs_mkdir_err:
     return 1;
 }
 
-u32 fs_cat(u8 *path) {
-    u8 filename[12];
+u32 fs_cat(u8 *path) 
+{
     FILE cat_file;
-
     /* Open */
     if (0 != fs_open(&cat_file, path)) {
         log(LOG_FAIL, "File %s open failed", path);
         return 1;
     }
-
     /* Read */
     u32 file_size = get_entry_filesize(cat_file.entry.data);
     u8 *buf = (u8 *)kmalloc(file_size + 1);

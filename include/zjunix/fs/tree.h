@@ -16,7 +16,9 @@ struct filetree {
     struct filetree * before;     /* The pointer to before brother */
 };
 
-struct filetree * root;   /* The root of tree */
+/* The root of tree */
+struct filetree * root;
+
 /* initial root */     
 void init_filetree();
 
