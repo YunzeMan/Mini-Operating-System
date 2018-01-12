@@ -16,10 +16,10 @@ typedef struct Queue
 {  
     struct task_struct* point;  
     struct Queue *next;  
-}queue;  
-  
+} queue;  
+
 typedef struct sem_t_  
-{      
+{
     queue *head;  
     queue *tail; 
     char name[SEM_NAME_LENGTH];  

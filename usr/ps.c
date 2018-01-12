@@ -194,7 +194,6 @@ void parse_cmd() {
         kernel_printf("  kmalloc : %x, size = 1KB\n", addr2);
         void * addr3 = kmalloc(1024);
         kernel_printf("  kmalloc : %x, size = 1KB\n", addr3);
-
     } 
     else if (kernel_strcmp(ps_buffer, "mmtest4") == 0) {
         void * addr1 = kmalloc(8192);
