@@ -332,6 +332,7 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
     pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
     copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));  // Save old state
 
+
     copy_context(pt_context, &(task_queue[priority].pcb[curr_pos].context)); // Copy to new 
     task_queue[priority].pcb[curr_pos].priority = priority; // Static priority
     task_queue[priority].pcb[curr_pos].time_slice = 0;
@@ -348,7 +349,7 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
     //kernel_printf("Parent's ra is %x\n", pt_context->ra);
     //kernel_printf("Child's ra is %x\n", task_queue[priority].pcb[curr_pos].context.ra);
 
-    
+    curr_proc[curr_queue] = curr_pos;
     copy_context(&(task_queue[priority].pcb[curr_pos].context), pt_context);
 
     //print_proc();
@@ -400,7 +401,7 @@ int fork() {
  *@No return value
  */
 void test_fork() {
-    unsigned int pid = fork();
+    int pid = fork();
 
     if (pid < 0) {
         kernel_printf("  fork failed!\n");
@@ -452,7 +453,7 @@ void exit(){
 void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_context) {
     free_pidmap(task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID);
     int asid = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
-    int i, j;
+    int i, j, pos;
     /*
     
     */
@@ -461,7 +462,7 @@ void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_contex
     { // Give the child processes to init process
         for(i = 7; i >= 0; i--) // From high priority to low priority
         {
-            int pos = curr_proc[i];
+            pos = curr_proc[i];
             for(j = 0; j < 16; j++)
             { 
                 pos = (pos + 1) & 15;
