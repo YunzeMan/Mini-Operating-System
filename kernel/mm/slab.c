@@ -5,6 +5,8 @@
 
 #define KMEM_ADDR(PAGE, BASE) ((((PAGE) - (BASE)) << PAGE_SHIFT) | 0x80000000)
 
+int flag = 1;
+
 // one list of PAGE_SHIFT(now it's 12) possbile memory size 96, 192, 8, 16, 32, 64, 128, 256, 512, 1024
 struct kmem_cache kmalloc_caches[10];
 
@@ -84,7 +86,8 @@ void format_slabpage(struct kmem_cache *cache, struct page *page)
     //page->slabp = (unsigned int)((cache->cpu.freeobj));
     page->max_object = max_object;
 
-    kernel_printf("  max object num: %x\n", page->max_object);
+    if(flag == 1)
+        kernel_printf("  max object num: %x\n", page->max_object);
 
     page->freeobj = cache->cpu.freeobj;
 }
@@ -99,7 +102,8 @@ void *slab_alloc(struct kmem_cache *cache)
         cache->cpu.freeobj = cache->cpu.page->freeobj;
     }
     //check whether there is freeobj
-    kernel_printf("  cpu.freeobj: %x\n", cache->cpu.freeobj);
+    if(flag == 1)
+        kernel_printf("  cpu.freeobj: %x\n", cache->cpu.freeobj);
     if (cache->cpu.freeobj)
         object = (cache->cpu.freeobj);
     
@@ -159,12 +163,14 @@ normal:
     cache->cpu.page->freeobj = (void *)(*((unsigned int *)(object + cache->offset)));
     cache->cpu.freeobj = cache->cpu.page->freeobj;
     //page->freeobj = cache->cpu.freeobj;
-    kernel_printf("  next free obj: %x\n", cache->cpu.page->freeobj);
+    if(flag == 1)
+        kernel_printf("  next free obj: %x\n", cache->cpu.page->freeobj);
     //cache->cpu.page->freeobj = (void *)((cache->cpu.freeobj));
 
     //s_head = (struct slab_head *)KMEM_ADDR(cache->cpu.page, pages);
     (cache->cpu.page->nr_objs)++;
-    kernel_printf("  alloc obj num: %x\n",cache->cpu.page->nr_objs );
+    if(flag == 1)
+        kernel_printf("  alloc obj num: %x\n",cache->cpu.page->nr_objs );
     //++(s_head->nr_objs);
 
     // slab may be full after this allocation
@@ -211,11 +217,13 @@ void *kmalloc(unsigned int size)
             kernel_printf("  ERROR: No available page\n");
             while (1) ;
         }
+        //kernel_printf("  alloc page %x\n",addr);
         return (void *)(KERNEL_ENTRY | addr);
     }
 
     bf_index = get_slab(size);
-    kernel_printf("  get slab %x\n", bf_index);
+    if(flag == 1)
+        kernel_printf("  get slab %x\n", bf_index);
     if (bf_index >= 10)
     {
         kernel_printf("  ERROR: No available slab\n");
@@ -229,9 +237,11 @@ void slab_free(struct kmem_cache *cache, void *object, void *temp)
 /*
 * object : the object need to be released 's start address
 */
-    kernel_printf("  object to free: %x\n", object);
+    if(flag == 1)
+        kernel_printf("  object to free: %x\n", object);
     struct page *temp_page = pages + ((unsigned int)temp >> PAGE_SHIFT);
-    kernel_printf("  page to free: %x\n", temp_page);
+    if(flag == 1)
+        kernel_printf("  page to free: %x\n", temp_page);
     unsigned int *ptr;
     //struct slab_head *s_head = (struct slab_head *)KMEM_ADDR(opage, pages);
 
@@ -269,10 +279,13 @@ void kfree(void *obj)
     struct page *page;
     void * temp = (void *)((unsigned int)obj & (~KERNEL_ENTRY));
     obj = (void *)((unsigned int)obj | (KERNEL_ENTRY));
-    kernel_printf("  kfree obj: %x\n", obj);
+    if(flag == 1)
+        kernel_printf("  kfree obj: %x\n", obj);
     page = pages + ((unsigned int)temp >> PAGE_SHIFT);
-    kernel_printf("  kfree page: %x\n", page);
-    kernel_printf("   %x\n", page->reference);
+    if(flag == 1){
+        kernel_printf("  kfree page: %x\n", page);
+        kernel_printf("   %x\n", page->reference);
+    }
     if (!(page->reference == 1))
     {
         return free_pages((void *)((unsigned int)obj & ~((1 << PAGE_SHIFT) - 1)), page->bplevel);
@@ -299,3 +312,8 @@ void init_slab()
     kernel_printf("  \n");
 }
 
+
+void changeflag(int flag_)
+{
+    flag = flag_;
+}

@@ -327,15 +327,16 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
         while (1)
             ;
     }
+    
+    task_queue[priority].pcb[curr_pos].ASID = alloc_pidmap();
+    pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
     copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));  // Save old state
 
     copy_context(pt_context, &(task_queue[priority].pcb[curr_pos].context)); // Copy to new 
     task_queue[priority].pcb[curr_pos].priority = priority; // Static priority
     task_queue[priority].pcb[curr_pos].time_slice = 0;
     kernel_strcpy(task_queue[priority].pcb[curr_pos].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
-    task_queue[priority].pcb[curr_pos].ASID = alloc_pidmap();
     task_queue[priority].pcb[curr_pos].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
-    pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
     task_queue[priority].pcb[curr_pos].context.v1 = 0;
 
     unsigned int offset = pt_context->sp - task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
