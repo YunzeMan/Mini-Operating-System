@@ -161,8 +161,15 @@ void parse_cmd() {
         result = print_proc();
         kernel_printf("  ps return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "forktest") == 0) {
-        result = test_fork();
-        kernel_printf("  forktest return with %d\n", result);
+        unsigned int init_gp;
+        asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+        int asid = alloc_pidmap();
+        pc_create(asid, test_fork, (unsigned int)kmalloc(8192) + 8192, init_gp, "forktest", DEFAULT_PRIO + 2);
+    } else if (kernel_strcmp(ps_buffer, "pidtest") == 0) {
+        unsigned int init_gp;
+        asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
+        int asid = alloc_pidmap();
+        pc_create(asid, test_pidmap, (unsigned int)kmalloc(8192) + 8192, init_gp, "pidtest", DEFAULT_PRIO + 2);
     } else if (kernel_strcmp(ps_buffer, "mmtest1") == 0) {
         void * addr1 = kmalloc(512);
         kernel_printf("  kmalloc : %x, size = 0.5KB\n", addr1);
@@ -185,7 +192,14 @@ void parse_cmd() {
         void * addr3 = kmalloc(1024);
         kernel_printf("  kmalloc : %x, size = 1KB\n", addr3);
 
-    } else if (kernel_strcmp(ps_buffer, "kill") == 0) {
+    } 
+    else if (kernel_strcmp(ps_buffer, "mmtest4") == 0) {
+        void * addr1 = kmalloc(8192);
+        kernel_printf("  kmalloc : %x, size = 8KB\n", addr1);
+        void * addr2 = kmalloc(8192);
+        kernel_printf("  kmalloc : %x, size = 8KB\n", addr2);
+        kfree(addr1);
+    }else if (kernel_strcmp(ps_buffer, "kill") == 0) {
         int pid = param[0] - '0';
         kernel_printf("  Killing process %d\n", pid);
         result = pc_kill(pid);
@@ -195,9 +209,6 @@ void parse_cmd() {
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
         int asid = alloc_pidmap();
         pc_create(asid, system_time_proc, (unsigned int)kmalloc(8192)+8192, init_gp, "time", DEFAULT_PRIO);
-    } else if (kernel_strcmp(ps_buffer, "testpid") == 0) {
-        int result = test_pidmap();
-        kernel_printf("  test_pidmap return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "time7") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));

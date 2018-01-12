@@ -9,35 +9,20 @@
 #include <zjunix/slab.h>
 #include <zjunix/buddy.h>
 
-#define PID_MAX 56
-
 // The 8-level task queue, higher number stands for higher priority
 pidmap_t pid_map;
 
 int last_pid = -1;
 
 
-/*offset对应于一个要处理的pid编号。
-offset & 31只保留后5位的值，然后1左移这个值的大小位，这样的话，我们就在某一行中找到了具体的对应的那一位了。
-offset右移５位，表示将offset的后5位屏蔽掉了。这样的话，我们就可以找到对应的具体的某一行地址了。*/
-
-/*
-pid / 8， int a=(pid/8)，将得到的a的值作为pidmap.page的下标，也就是pidmap.page[a]，然后用int b=(pid%8)得到对应位的0—7之间的编号，这样的话，就唯一确定了一个pid编号在pidmap.page中的具体位置。
-
-内核当中是通过移位操作来实现的。我们可以抽象出一张表，这个表有32列，1024行，这个刚好是一个页的大小。这个时候，可以通过pid的后5位值（变化范围在0—31之间）来确定在某一行的具体的列。通过pid的高27位（pid本身是32位的）来表示在具体的某一 行。所以我们可以通过移位操作来实现。
-这 里为什么每一行要设置成32列，而不是8列，或者是64列呢？我是这么考虑的，这个算法是在32位机子上运行的，如果是32位的话，刚好是一个 unsigned int所占的空间的大小，这样对它的地址的加一操作会跳跃4个字节，和每行8列进行对比的话，这个操作更能够减少加法操作的次数。
-
-
-    unsigned long mask = 1UL << (offset & (sizeof(unsigned long) * BITS_PER_BYTE - 1));
-    unsigned long *p = ((unsigned long*)addr) + (offset >> (sizeof(unsigned long) + 1));
-
-简化：
-
-    unsigned long mask = 1UL << (offset & 31);
-    unsigned long *p = ((unsigned long*)addr) + (offset >> 5);
-
-
-*/
+/* Initiate pid part 
+ * 
+ *Function init_pc initiates the pid functions of the OS. It set last allocated pid to -1, free number of pids to MAX
+ *and memset the pid page.  
+ *Further operations can be added.
+ *@No parameters
+ *@No return value
+ */
 void init_pid() 
 {
     int i;
@@ -66,7 +51,14 @@ void clear_bit(int offset, void *addr)
     *p = old & ~mask;
 }
 
-//从offset开始，找下一个是0（也就是可以分配）的pid号。其中addr是pidmap.page变量的地址，size是一个页的大小。
+/* Find the next allocatable pid
+ * 
+ *Function find_next_zero_bit finds the next 0 pid (allocatable pid). 
+ *@param addr The address of the page map
+ *@param size The size of a page
+ *@param offset The finding begin position 
+ *@return value is return state
+ */
 int find_next_zero_bit(void *addr, int size, int offset)
 {
     unsigned long *p;
@@ -88,7 +80,7 @@ int find_next_zero_bit(void *addr, int size, int offset)
 int alloc_pidmap()
 {
     int pid = last_pid + 1;
-    int offset = pid & BITS_PER_PAGE_MASK;//把offset的最高为变为0，其他的不变
+    int offset = pid & BITS_PER_PAGE_MASK; // Use & Operation to take call of overflow
     
     if (!pid_map.nr_free)
     {
@@ -112,17 +104,30 @@ void free_pidmap(int pid)
     clear_bit(offset, &pid_map.page);
 }
 
-int test_pidmap()
+void test_pidmap()
 {
-    int i, asid;
-    unsigned int init_gp;
-    asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-    for (i = 0; i < 10000; i++)
+    int i, pid;
+    for (i = 0; i < 10; i++)
     {
-        asid = alloc_pidmap();
-        pc_create(asid, system_time_proc, (unsigned int)kmalloc(512) + 512, init_gp, "testpid", DEFAULT_PRIO + 1);
-        pc_kill(asid);
+        pid = fork();
+        if (pid < 0) {
+            kernel_printf("  fork failed!\n");
+        }
+        else if (pid == 0) {
+        // In child process
+            exit();
+        } 
     }
-    asid = alloc_pidmap();
-    pc_create(asid, system_time_proc, (unsigned int)kmalloc(512) + 512, init_gp, "testpid", DEFAULT_PRIO + 1);
+
+    pid = fork();
+    if (pid < 0) {
+        kernel_printf("  fork failed!\n");
+    }
+    else if (pid == 0) {
+    // In child process
+        kernel_printf("  After %d allocation, call ps:\n", i);
+        print_proc();
+        exit();
+    } 
+    exit();
 }
