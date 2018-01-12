@@ -23,8 +23,7 @@ unsigned int time_slice[8];
 // Bits Map is used for saving the 
 unsigned int bits_map[8];
 
-// 
-unsigned int v0;
+unsigned int kill_state;
 //char pc_name[108][16];
 
 /* Copy the context of the process
@@ -96,9 +95,11 @@ void init_pc() {
 
     kernel_strcpy(task_queue[4].pcb[0].name, "init");   // Name is init
     //kernel_strcpy(pc_name[0], "init");   // Name is init
-
     curr_proc[4] = 0;
     curr_queue = 4;
+    // Initiate kill state to 0 
+    kill_state = 1;
+
     // Register the neccessary system call and interrupt
     register_syscall(10, pc_kill_syscall);
     register_syscall(11, pc_preempt_syscall);
@@ -156,6 +157,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].time_slice = task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice; // Copy the time_slice
                 kernel_strcpy(task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].ASID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+                task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].PPID;
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].stack = task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
 
 
@@ -185,6 +187,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].time_slice = task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice; // Copy the time_slice
                 kernel_strcpy(task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].ASID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+                task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].PPID;
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].stack = task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
 
                 task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID = -1;
@@ -250,6 +253,7 @@ int pc_peek(int priority) {
         return -1;
     return i;
 }
+
 
 /* Directly create a process  
  * 
@@ -332,7 +336,6 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
     task_queue[priority].pcb[curr_pos].ASID = alloc_pidmap();
     task_queue[priority].pcb[curr_pos].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
     pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
-    v0 = task_queue[priority].pcb[curr_pos].ASID;
     task_queue[priority].pcb[curr_pos].context.v1 = 0;
 
     unsigned int offset = pt_context->sp - task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
@@ -397,7 +400,6 @@ int fork() {
  */
 void test_fork() {
     unsigned int pid = fork();
-    //kernel_printf("  test_fork ASID is %x\n", pid);
 
     if (pid < 0) {
         kernel_printf("  fork failed!\n");
@@ -448,7 +450,30 @@ void exit(){
  */
 void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_context) {
     free_pidmap(task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID);
+    int asid = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+    int i, j;
+    /*
+    
+    */
+
+    if (kill_state)
+    { // Give the child processes to init process
+        for(i = 7; i >= 0; i--) // From high priority to low priority
+        {
+            int pos = curr_proc[i];
+            for(j = 0; j < 16; j++)
+            { 
+                pos = (pos + 1) & 15;
+                if(task_queue[i].pcb[pos].PPID == asid) // Find child processes
+                    task_queue[i].pcb[pos].PPID = 0;
+            }
+        }
+    }
+    else{ // Recursive kill
+        
+    }
     task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID = -1;
+
     pc_schedule(status, cause, pt_context);
 }
 

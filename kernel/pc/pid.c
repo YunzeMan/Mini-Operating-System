@@ -9,8 +9,6 @@
 #include <zjunix/slab.h>
 #include <zjunix/buddy.h>
 
-#define PID_MAX 56
-
 // The 8-level task queue, higher number stands for higher priority
 pidmap_t pid_map;
 
@@ -106,17 +104,30 @@ void free_pidmap(int pid)
     clear_bit(offset, &pid_map.page);
 }
 
-int test_pidmap()
+void test_pidmap()
 {
-    int i, asid;
-    unsigned int init_gp;
-    asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-    for (i = 0; i < 10000; i++)
+    int i, pid;
+    for (i = 0; i < 10; i++)
     {
-        asid = alloc_pidmap();
-        pc_create(asid, system_time_proc, (unsigned int)kmalloc(512) + 512, init_gp, "testpid", DEFAULT_PRIO + 1);
-        pc_kill(asid);
+        pid = fork();
+        if (pid < 0) {
+            kernel_printf("  fork failed!\n");
+        }
+        else if (pid == 0) {
+        // In child process
+            exit();
+        } 
     }
-    asid = alloc_pidmap();
-    pc_create(asid, system_time_proc, (unsigned int)kmalloc(512) + 512, init_gp, "testpid", DEFAULT_PRIO + 1);
+
+    pid = fork();
+    if (pid < 0) {
+        kernel_printf("  fork failed!\n");
+    }
+    else if (pid == 0) {
+    // In child process
+        kernel_printf("  After %d allocation, call ps:\n", i);
+        print_proc();
+        exit();
+    } 
+    exit();
 }
