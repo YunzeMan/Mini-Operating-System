@@ -14,6 +14,7 @@
 #include <zjunix/syscall.h>
 #include <zjunix/time.h>
 #include <zjunix/fs/vfs.h>
+#include <zjunix/fs/tree.h>
 #include "../usr/ps.h"
 
 void machine_info() {
@@ -68,9 +69,19 @@ void init_kernel() {
     // File system
     log(LOG_START, "File System.");
     init_fs();
-    // new add vfs
-    //initial_vfs();
     log(LOG_END, "File System.");
+    // Virtual File System
+    log(LOG_START, "Virtual File System.");
+    // new add vfs
+    initial_vfs();
+    log(LOG_OK, "Virtual File System.");
+    log(LOG_END, "Virtual File System.");
+    // File Tree
+    log(LOG_START, "File Tree.");
+    // new add filetree
+    init_filetree();
+    log(LOG_OK, "File Tree.");
+    log(LOG_END, "File Tree.");
     // System call
     log(LOG_START, "System Calls.");
     init_syscall();

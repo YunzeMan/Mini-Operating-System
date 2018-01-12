@@ -5,19 +5,23 @@
 
 #define MAX_NAME_LEN 256
 
-struct filetree {
-    u8 name[256];
-    struct filetree * child;
-    struct filetree * parent;
-    struct filetree * next;
-    struct filetree * before;
+struct filetree { 
+    u8 name[256];                 /* File name */
+    u16 ctime;                    /* Creation time */
+    u16 cdate;                    /* Creation date */
+    u32 size;                     /* file size (in bytes) */
+    struct filetree * child;      /* The pointer to child */
+    struct filetree * parent;     /* The pointer to parent */
+    struct filetree * next;       /* The pointer to next brother */
+    struct filetree * before;     /* The pointer to before brother */
 };
 
-/* the root */
-struct filetree * treeparent;
+struct filetree * root;   /* The root of tree */
+/* initial root */     
+void init_filetree();
 
 /* initial treenode */
-void init_treenode(struct filetree * p, char * name);
+struct filetree * init_treenode(char * name);
 
 /* Output filename in the directory */
 void outputDir(struct filetree * tParent);
@@ -26,10 +30,10 @@ void outputDir(struct filetree * tParent);
 void becomeChild(struct filetree * tParent, struct filetree * tChild);
 
 /* find tree */
-void FindTree(struct filetree * tParent, char * param);
+struct filetree * findNode(char * param);
 
 /* Delete node */
-void DeleteNode(struct filetree * tTree);
+void deleteNode(char * param);
 
 /* Print file tree */
 void print_tree(struct filetree * ft);
@@ -38,6 +42,6 @@ void print_tree(struct filetree * ft);
 int Empty(struct filetree * ft);
 
 /* matching file */
-void matching(char * param);
+int matching(struct filetree * p, char * param);
 
 #endif // !_ZJUNIX_FS_TREE_H
