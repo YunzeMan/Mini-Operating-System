@@ -8,6 +8,10 @@
 #include <zjunix/buddy.h>
 #include <zjunix/pid.h>
 
+
+#pragma GCC push_options
+#pragma GCC optimize("O0")
+
 // The 8-level task queue, higher number stands for higher priority
 task_level task_queue[8];
 
@@ -19,7 +23,7 @@ unsigned int time_slice[8];
 // Bits Map is used for saving the 
 unsigned int bits_map[8];
 
-// 
+unsigned int kill_state;
 //char pc_name[108][16];
 
 /* Copy the context of the process
@@ -85,14 +89,17 @@ void init_pc() {
     
     // Set the Init process's ASID to 0, a special value in order not to schedule it any more
     task_queue[4].pcb[0].ASID = alloc_pidmap();
+    task_queue[4].pcb[0].PPID = -1;
     task_queue[4].pcb[0].counter = PROC_DEFAULT_TIMESLOTS;
     task_queue[4].pcb[0].priority = 4;
 
     kernel_strcpy(task_queue[4].pcb[0].name, "init");   // Name is init
     //kernel_strcpy(pc_name[0], "init");   // Name is init
-
     curr_proc[4] = 0;
     curr_queue = 4;
+    // Initiate kill state to 0 
+    kill_state = 1;
+
     // Register the neccessary system call and interrupt
     register_syscall(10, pc_kill_syscall);
     register_syscall(11, pc_preempt_syscall);
@@ -150,6 +157,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].time_slice = task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice; // Copy the time_slice
                 kernel_strcpy(task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].ASID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+                task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].PPID;
                 task_queue[curr_queue + 1].pcb[curr_proc[curr_queue + 1]].stack = task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
 
 
@@ -179,6 +187,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].time_slice = task_queue[curr_queue].pcb[curr_proc[curr_queue]].time_slice; // Copy the time_slice
                 kernel_strcpy(task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].ASID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+                task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].PPID;
                 task_queue[curr_queue - 1].pcb[curr_proc[curr_queue - 1]].stack = task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
 
                 task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID = -1;
@@ -245,6 +254,7 @@ int pc_peek(int priority) {
     return i;
 }
 
+
 /* Directly create a process  
  * 
  *Function pc_create directly creates a process, the parameters of the process is specified as inputs
@@ -257,7 +267,6 @@ int pc_peek(int priority) {
  *@No return value
  */
 void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init_gp, char* name, int priority) { // curr proc cannot change
-    //kernel_puts("  pc_create start\n", 0xfff, 0);
     int i;
     int curr_pos = curr_proc[priority]; // Do not change the curr_proc value
     for (i = 0; i < 16; i++)
@@ -280,11 +289,11 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
     task_queue[priority].pcb[curr_pos].priority = priority; // Static priority
     task_queue[priority].pcb[curr_pos].time_slice = 0;
     kernel_strcpy(task_queue[priority].pcb[curr_pos].name, name);
-    //kernel_strcpy(pc_name[asid], name);   // Name is init
     
     task_queue[priority].pcb[curr_pos].ASID = asid;
+    task_queue[priority].pcb[curr_pos].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
     
-    // 
+    // Priority is higher, trigger preempt  
     if (task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID > 0 && priority > curr_queue)
     { //  
         asm volatile(
@@ -292,13 +301,11 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
             "syscall\n\t"
             "nop\n\t");
     }
-    //kernel_puts("  pc_create end\n", 0xfff, 0);
-
 }
 
-/* Do fork =======================================================
+/* Do fork syscall
  * 
- *Function pc_preempt_syscall is registered as a system call, which calls pc_schedule 
+ *Function do_fork is a system call, which forks a new process on the current process
  *@param status input of system calls and interrupts, the state of CPU
  *@param cause input of the system calls and interrupts, the cause of the interruption
  *@param pt_context input of the system calls and interrupts, the context of the current PC
@@ -307,14 +314,10 @@ void pc_create(int asid, void (*func)(), unsigned int init_sp, unsigned int init
 void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
     int i;
     unsigned int priority = task_queue[curr_queue].pcb[curr_proc[curr_queue]].priority;
-    //kernel_printf("  a0 is %d\n",pt_context->a0);
     int curr_pos = curr_proc[priority]; // Do not change the curr_proc value
     for (i = 0; i < 16; i++)
     {
         curr_pos = (curr_pos + 1) & 15;        
-        //kernel_printf("  Priority is %d\n",priority);
-        //kernel_printf("  curr_pos is %d\n",curr_pos);
-        //kernel_printf("  ASID is %d\n", task_queue[priority].pcb[curr_pos].ASID);
         if(task_queue[priority].pcb[curr_pos].ASID < 0)
             break;
     }
@@ -324,27 +327,26 @@ void do_fork(unsigned int status, unsigned int cause, context* pt_context) {
         while (1)
             ;
     }
-    //copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));  // Save old state
+    copy_context(pt_context, &(task_queue[curr_queue].pcb[curr_proc[curr_queue]].context));  // Save old state
 
     copy_context(pt_context, &(task_queue[priority].pcb[curr_pos].context)); // Copy to new 
     task_queue[priority].pcb[curr_pos].priority = priority; // Static priority
     task_queue[priority].pcb[curr_pos].time_slice = 0;
     kernel_strcpy(task_queue[priority].pcb[curr_pos].name, task_queue[curr_queue].pcb[curr_proc[curr_queue]].name);
     task_queue[priority].pcb[curr_pos].ASID = alloc_pidmap();
-    pt_context->v0 = task_queue[priority].pcb[curr_pos].ASID;
-    task_queue[priority].pcb[curr_pos].context.v0 = 0;
+    task_queue[priority].pcb[curr_pos].PPID = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+    pt_context->v1 = task_queue[priority].pcb[curr_pos].ASID;
+    task_queue[priority].pcb[curr_pos].context.v1 = 0;
 
     unsigned int offset = pt_context->sp - task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack;
-    task_queue[priority].pcb[curr_pos].stack = (unsigned int)kmalloc(8192);
+    task_queue[priority].pcb[curr_pos].stack = (unsigned int)kmalloc(8192); 
+
     kernel_memcpy((void *)task_queue[priority].pcb[curr_pos].stack, (void *)task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack, 8192);
     task_queue[priority].pcb[curr_pos].context.sp = task_queue[priority].pcb[curr_pos].stack + offset;
   
-    kernel_printf("  New Stack is %x\n", task_queue[priority].pcb[curr_pos].stack);
-    kernel_printf("  Old Stack is %x\n", task_queue[curr_queue].pcb[curr_proc[curr_queue]].stack);
-    kernel_printf("  New SP is %x\n", task_queue[priority].pcb[curr_pos].context.sp);
-    kernel_printf("  Old SP is %x\n", pt_context->sp);
+    //kernel_printf("Parent's ra is %x\n", pt_context->ra);
+    //kernel_printf("Child's ra is %x\n", task_queue[priority].pcb[curr_pos].context.ra);
 
-    kernel_printf("  ASID is %d\n", task_queue[priority].pcb[curr_pos].ASID);
     
     copy_context(&(task_queue[priority].pcb[curr_pos].context), pt_context);
 
@@ -377,11 +379,13 @@ int fork() {
         "nop\n\t");
 
     asm volatile(
-        "move %0, $v0\n\t"
+        "move %0, $v1\n\t"
         "nop\n\t"
         : "=r" (pid));
     
-    kernel_printf("  ASID is %d\n", pid);
+    //kernel_printf("  fork ASID(v0) is %x\n", pid);
+    //kernel_printf("In fork(), ra is %x\n", task_queue[curr_queue].pcb[curr_proc[curr_queue]].context.ra);
+
 
     return pid;
 }
@@ -394,9 +398,8 @@ int fork() {
  *@param pt_context input of the system calls and interrupts, the context of the current PC
  *@No return value
  */
-int test_fork() {
+void test_fork() {
     unsigned int pid = fork();
-    kernel_printf("  ASID is %d\n", pid);
 
     if (pid < 0) {
         kernel_printf("  fork failed!\n");
@@ -404,16 +407,16 @@ int test_fork() {
     else if (pid == 0) {
         // In child process
         kernel_printf("  This is child process! Hello daddy!\n");
-        kernel_printf("  pid is %d\n", pid);
-
+        while(1)
+            ;
     } 
     else {
         kernel_printf("  This is parent process! Good Son!\n");
+        while(1)
+            ;
     }
-    kernel_printf("  ==========================\n");
-
-    return pid;
 }
+
 
 /* Do schedule due to preemption
  * 
@@ -447,11 +450,34 @@ void exit(){
  */
 void pc_kill_syscall(unsigned int status, unsigned int cause, context* pt_context) {
     free_pidmap(task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID);
+    int asid = task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID;
+    int i, j;
+    /*
+    
+    */
+
+    if (kill_state)
+    { // Give the child processes to init process
+        for(i = 7; i >= 0; i--) // From high priority to low priority
+        {
+            int pos = curr_proc[i];
+            for(j = 0; j < 16; j++)
+            { 
+                pos = (pos + 1) & 15;
+                if(task_queue[i].pcb[pos].PPID == asid) // Find child processes
+                    task_queue[i].pcb[pos].PPID = 0;
+            }
+        }
+    }
+    else{ // Recursive kill
+        
+    }
     task_queue[curr_queue].pcb[curr_proc[curr_queue]].ASID = -1;
+
     pc_schedule(status, cause, pt_context);
 }
 
-/* Kill a process with certain ID
+/* Kill a process with certain ID, recursively kill childs or turn to init's child
  * 
  *Function pc_kill kills a process with certain PID, 
  *its difference with pc_kill_syscall is it is not a system call.
@@ -510,14 +536,16 @@ task_struct* get_curr_pcb() {
  */
 int print_proc() {
     int i, j;
-    kernel_puts("  PID\t\tname\t\tstatP\n", 0xfff, 0);
+    kernel_puts("  PPID\t\tPID\t\tname\t\tstatP\n", 0xfff, 0);
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 16; j++){
             if (task_queue[i].pcb[j].ASID >= 0)
-                kernel_printf("   %d\t\t%s\t\t%d\n", task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
+                kernel_printf("   %d\t\t%d\t\t%s\t\t%d\n", task_queue[i].pcb[j].PPID, task_queue[i].pcb[j].ASID, task_queue[i].pcb[j].name, task_queue[i].pcb[j].priority);
         }
     }
     return 0;
 }
+
+#pragma GCC pop_options
 
 // schedule, create and init are carefully checked
