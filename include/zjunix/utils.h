@@ -3,10 +3,26 @@
 
 #define container_of(ptr, type, member) ((type*)((char*)ptr - (char*)&(((type*)0)->member)))
 
+#include "type.h"
+#include "slab.h"
+
 void* kernel_memcpy(void* dest, void* src, int len);
 void* kernel_memset(void* dest, int b, int len);
 unsigned int* kernel_memset_word(unsigned int* dest, unsigned int w, int len);
+void* kernel_memmove(void* to, const void* from, int count);
 int kernel_strcmp(const char* dest, const char* src);
+int kernel_strlen(char * str);
+char * kernel_strcat(char * dest, char * src);
+char * kernel_strncat(char *dest, char *src, int n);
+char * kernel_strncpy(char *dest, char *src, int n);
+char * kernel_strchr(const char *s, int c);
+char * kernel_strrchr(const char *s, int c);
+char * kernel_strstr(const char *str1, const char *str2);
+char * kernel_strtok(char *str, const char *delim);
+int kernel_strxfrm(char *dest, const char *src, int n);
+int kernel_strspn(const char *str1, const char *str2);
+char * kernel_strpbrk(const char *str1, const char *str2);
+char * kernel_strdup(char * src);
 int pow(int x, int z);
 void kernel_cache(unsigned int block_index);
 char* kernel_strcpy(char* dest, const char* src);

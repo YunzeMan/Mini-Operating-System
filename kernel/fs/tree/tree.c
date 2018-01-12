@@ -3,7 +3,6 @@
 #include <driver/vga.h>
 #include <zjunix/utils.h>
 
-
 void init_filetree()
 {
     int i;
@@ -97,8 +96,46 @@ void deleteNode(char * param)
 {
     struct filetree * p;
     struct filetree * t;
+    struct filetree * t1;
     p = findNode(param);
-    if(p->parent->child == p)
+    kernel_printf("%s\n",p->name);
+    if(p->parent == NULL)
+    {
+        kernel_printf("parent is NULL\n");
+        t = p->before;
+        if(t != NULL)
+        {
+            t->next = p->next;
+            p->before = NULL;
+            p->next = NULL;
+            kfree(p);
+        }
+        else
+        {
+            kfree(p);
+        }
+    }
+    else
+    {
+        kernel_printf("parent is not NULL\n");
+        t = p->parent;
+        t1 = p->next;
+        if(t1 != NULL)
+        {
+            t->child = t1;
+            t1->parent = t;
+            p->next = NULL;
+            t1->before = NULL;
+        }
+        else
+        {
+            t->child = NULL;
+            p->parent = NULL;
+            p->before = NULL;
+            p->next = NULL;
+        }
+    }
+    /*if(p->parent->child == p)
     {
         p->parent->child = p->next;
         p->next->parent = p->parent;
@@ -119,7 +156,7 @@ void deleteNode(char * param)
         {
             t->next = p->next;
         }
-    }
+    }*/
 }
 
 void print_tree(struct filetree * ft)
@@ -159,7 +196,7 @@ int matching(struct filetree * p, char * param)
     unsigned int len = 0;
     while (p->name[len])
         ++len;
-    for(i=0; i<len; i++)
+    for(i=0; i<=len; i++)
     {
         if(p->name[i] == param[i])
         {
@@ -169,12 +206,12 @@ int matching(struct filetree * p, char * param)
             break;
         }
     }
-    if(i<len)
+    if(i<=len)
     {
-        return 1;
+        return 0;
     }
     else
     {
-        return 0;
+        return 1;
     }
 }

@@ -66,7 +66,11 @@ void ps() {
     }
     pwd[0] = '/';
     ps_buffer_index = 0;
-    ps_buffer[0] = 0;
+    //ps_buffer[0] = 0;
+    for(i = 0; i < 64; i++)
+    {
+        ps_buffer[i] = 0;
+    }
     kernel_clear_screen(31);
     kernel_puts("  PowerShell\n", 0xfff, 0);
     kernel_puts("  PS>", 0xfff, 0);
@@ -112,6 +116,7 @@ void parse_cmd() {
     char *dest; /* The destination of cp and mv instruction */
     char *parent;
     struct filetree * fd;
+    struct filetree * p;
     /* participle ps_buffer to get param and cmd */
     for (i = 0; i < 63; i++) {
         if (ps_buffer[i] == ' ') {
@@ -123,6 +128,7 @@ void parse_cmd() {
         param = ps_buffer;
     else
         param = ps_buffer + i + 1;
+    kernel_printf("  %s\n",param);
     if (ps_buffer[0] == 0) {
         return;
     } else if (kernel_strcmp(ps_buffer, "clear") == 0) {
@@ -220,11 +226,15 @@ void parse_cmd() {
         result = proc_demo_create();
         kernel_printf("  proc return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "cat") == 0) {
+        kernel_printf("cat instruction\n");
         result = vfsfile->fat32_file->cat(param);
         //result = fs_cat(param);
         kernel_printf("  cat return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "ls") == 0) {
-        result = ls(param);
+        //kernel_printf("  %s\n",param);
+        //param = kernel_strcat(param, pwd);
+        //kernel_printf("  %s\n",param);
+        result = ls(pwd);
         kernel_printf("  ls return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "vi") == 0) {
         result = myvi(param);
@@ -233,52 +243,70 @@ void parse_cmd() {
         result = exec(param);
         kernel_printf("  exec return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "rm") == 0) {
+        kernel_printf("In remove instruction\n");
         result = vfsfile->fat32_file->rm(param);
         //result = fs_rm(param);
-        //deleteNode(param);
+        if(result == 0)
+        {
+            deleteNode(param);
+        }
         kernel_printf("  rm return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "mkdir") == 0) {
         result = vfsfile->fat32_file->mkdir(param);
         // add in tree
-        /*struct filetree * p;
-        len = strlen(param);
-        init_treenode(p,param);
-        for(i = len - 1; i >=0; i--)
+        if(result == 0)
         {
-            if(param[i] == '/')
+            struct filetree * p;
+            len = strlen(param);
+            p = init_treenode(param);
+            for(i = len - 1; i >=0; i--)
             {
-                param[i] = 0;
-                break;
+                if(param[i] == '/')
+                {
+                    param[i] = 0;
+                    break;
+                }
             }
+            parent = param;
+            fd = findNode(parent);
+            becomeChild(fd,p);
         }
-        parent = param;
-        fd = findNode(parent);
-        becomeChild(fd,p);*/
         //result = fs_mkdir(param);
         kernel_printf("  mkdir return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "rmdir") == 0) {
         /* add rmdir instruction */
         result = vfsfile->fat32_file->rmdir(param);
-        //deleteNode(param);
+        if(result == 0)
+        {
+            deleteNode(param);
+        }
         //result = fs_rmdir(param);
         kernel_printf("  rmdir return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "touch") == 0) {
         result = vfsfile->fat32_file->create(param);
         // add in tree
-        /*struct filetree * p;
-        len = strlen(param);
-        init_treenode(p,param);
-        for(i = len - 1; i >=0; i--)
+        if(result == 0)
         {
-            if(param[i] == '/')
+            len = strlen(param);
+            p = init_treenode(param);
+            for(i = len - 1; i >=0; i--)
             {
-                param[i] = 0;
-                break;
+                if(param[i] == '/')
+                {
+                    param[i] = 0;
+                    break;
+                }
             }
+            parent = param;
+            if(parent[0] == 0)
+            {
+                parent[0] = '/';
+                parent[1] = 0;
+            }
+            kernel_printf("%s\n", parent);
+            fd = findNode(parent);
+            becomeChild(fd,p);
         }
-        parent = param;
-        fd = findNode(parent);
-        becomeChild(fd,p);*/
         //result = fs_create(param);
         kernel_printf("  touch return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "ls_l") == 0) {

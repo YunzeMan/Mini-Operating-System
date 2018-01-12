@@ -5,23 +5,18 @@
 char *cut_front_blank(char *str) {
     char *s = str;
     unsigned int index = 0;
-
     while (*s == ' ') {
         ++s;
         ++index;
     }
-
     if (!index)
         return str;
-
     while (*s) {
         *(s - index) = *s;
         ++s;
     }
-
     --s;
     *s = 0;
-
     return str;
 }
 
@@ -75,9 +70,11 @@ readdir:
         } else {
             get_filename((unsigned char *)&entry, name);
             if (entry.attr == 0x10)  // sub dir
-                kernel_printf("  %s/", name);
+                kernel_puts(name, VGA_WHITE, VGA_BLACK);
+                //kernel_printf("  %s/", name);
             else
-                kernel_printf("  %s", name);
+                kernel_puts(name, VGA_GREEN, VGA_BLACK);
+                //kernel_printf("  %s", name);
             kernel_printf("  \n");
             goto readdir;
         }
