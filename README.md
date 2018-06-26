@@ -1,4 +1,4 @@
-# Mini_Operation_System
+# Mini_Operating_System
 
 ## TODO
 - add README.md
