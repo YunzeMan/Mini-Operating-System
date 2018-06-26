@@ -1,12 +1,6 @@
 # Mini_Operation_System
 
-## Dependency
--    ​
-
-
-
-## Usage
-- ​
-- ​
+## TODO
+- add README.md
 
 
